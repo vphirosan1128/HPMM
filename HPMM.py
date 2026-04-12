@@ -68,13 +68,6 @@ st.markdown("""
     .svg-overlay img { width: 100%; height: 100%; object-fit: fill; }
     .text-overlay { paint-order: stroke fill; }
 
-    [data-testid="stFileUploaderDropzone"] div div span { display: none; }
-    [data-testid="stFileUploaderDropzone"] div div::before {
-        content: "ここにファイルをドラッグ＆ドロップ";
-        display: block; font-size: 16px; margin-bottom: 10px;
-    }
-    [data-testid="stFileUploaderDropzone"] button::after { content: "ファイルを選択"; font-size: 14px; }
-
     .upload-caption {
         font-size: 0.8rem;
         color: #ff4b4b;
