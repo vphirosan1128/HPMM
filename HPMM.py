@@ -640,7 +640,7 @@ with st.sidebar:
     st.sidebar.markdown("""
     - [ローカル版配布サイト](https://bowlroll.net/file/351828)
     - [作者のX(Twitter)](https://x.com/vphirosan)
-    - [作者の販売作品](https://www.patreon.com/posts/my-products-for-147807548)
+    - [作者の販売作品(18禁)](https://www.patreon.com/posts/my-products-for-147807548)
     - [オノマトペ集(有料)](https://crimson-hard.booth.pm/items/8189955)
     """)
 
