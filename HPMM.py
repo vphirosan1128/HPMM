@@ -638,6 +638,8 @@ with st.sidebar:
     st.divider()
     st.sidebar.caption("関連リンク")
     st.sidebar.markdown("""
+    - [ReadMe](https://note.com/vphirosan1128/n/n2d18a4593f78)
+    - [Web版](https://vphirosan1128-hpmm.streamlit.app/)
     - [ローカル版配布サイト](https://bowlroll.net/file/351828)
     - [作者のX(Twitter)](https://x.com/vphirosan)
     - [作者の販売作品(18禁)](https://www.patreon.com/posts/my-products-for-147807548)
