@@ -634,6 +634,16 @@ with st.sidebar:
     }
     st.download_button(label="設定ファイルを保存", data=json.dumps(export_data, indent=4, ensure_ascii=False), file_name="manga_config.json", mime="application/json", use_container_width=True)
 
+with st.sidebar:
+    st.divider()
+    st.sidebar.caption("関連リンク")
+    st.sidebar.markdown("""
+    - [ローカル版配布サイト](https://bowlroll.net/file/351828)
+    - [作者のX(Twitter)](https://x.com/vphirosan)
+    - [作者の販売作品](https://www.patreon.com/posts/my-products-for-147807548)
+    - [オノマトペ集(有料)](https://crimson-hard.booth.pm/items/8189955)
+    """)
+
 # --- 描画処理 & 保存ボタン生成 ---
 if (st.session_state.cached_imgs and valid_state) or st.session_state.trigger_draw:
     img_b64, svg_data = render_manga_preview(st.session_state.cached_imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, svg_settings, txt_settings, preview_zoom)
