@@ -165,11 +165,37 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
     svg_html = ""
     svg_data = []
     for s in svg_settings:
+
         content = s['content']
         c1 = s['color']
         a1 = s['fill_alpha']
         c2 = s['stroke_color']
         a2 = s['stroke_alpha']
+
+        sw_val = s.get('stroke_width', 0)
+
+        # パターンA (属性形式: stroke-width="2")
+        def stroke_width_replacer(match):
+            try:
+                # match.group(1) は SVG内に元々書かれている数値
+                orig = float(match.group(1))
+                if orig > 0:
+                    # 元が 5 でも 10 でも、0より大きければ UIの sw_val に書き換える
+                    return f'stroke-width="{sw_val}"'
+            except:
+                pass
+            # 元が 0 の場所は、そのまま 0 として返す
+            return match.group(0)
+
+        # パターンB (スタイル形式: stroke-width:2;)
+        def stroke_style_replacer(match):
+            try:
+                orig = float(match.group(1))
+                if orig > 0:
+                    return f'stroke-width:{sw_val};'
+            except:
+                pass
+            return match.group(0)
 
         content = re.sub(r'fill:\s*#FFFFFF;?', f'fill:{c1}; fill-opacity:{a1};', content, flags=re.IGNORECASE)
         content = re.sub(r'fill:\s*#000000;?', f'fill:{c2}; fill-opacity:{a2};', content, flags=re.IGNORECASE)
@@ -180,6 +206,9 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
         content = re.sub(r'stroke="white"', f'stroke="{c1}" stroke-opacity="{a2}"', content, flags=re.IGNORECASE)
         content = re.sub(r'stroke="black"', f'stroke="{c2}" stroke-opacity="{a2}"', content, flags=re.IGNORECASE)
 
+        content = re.sub(r'stroke-width="([\d\.]+)"', stroke_width_replacer, content, flags=re.IGNORECASE)
+        content = re.sub(r'stroke-width:\s*([\d\.]+);?', stroke_style_replacer, content, flags=re.IGNORECASE)
+        
         # clean_svg = re.sub(r'\s(width|height)="[^"]*"', '', content)
         clean_svg = re.sub(r'(<svg[^>]*?)\s(?:width|height)="[^"]*"', r'\1', content, count=2, flags=re.IGNORECASE)
 
@@ -193,8 +222,6 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
         transform = f'rotate({s["rotate"]}deg) scale({scale_x}, {scale_y})'
         svg_html += f'<div class="svg-overlay" style="left:{s["x"]}px; top:{s["y"]}px; width:{s["w"]}px; height:{s["h"]}px; transform:{transform};"><img src="{url}"></div>'
         svg_data.append({"src": url, **s})
-
-
 
     txt_html = ""
     for t in txt_settings:
@@ -360,7 +387,8 @@ def sync_all_settings_to_state(num_txt_local, current_svg_order):
             'flip_v': st.session_state.get(f"sfv_{name}", False),
             'x': st.session_state.get(f"sx_{name}", 100),
             'y': st.session_state.get(f"sy_{name}", 100),
-            'rotate': st.session_state.get(f"svgr_{name}", 0)
+            'rotate': st.session_state.get(f"svgr_{name}", 0),
+            'stroke_width': st.session_state.get(f"swd_{name}", 2), # ←これを追加
         })
     st.session_state.config["svgs"] = new_svgs
     new_txts = []
@@ -428,6 +456,7 @@ with st.sidebar:
                 if 'x' in s_c: st.session_state[f"sx_{t_name}"] = int(s_c['x'])
                 if 'y' in s_c: st.session_state[f"sy_{t_name}"] = int(s_c['y'])
                 if 'rotate' in s_c: st.session_state[f"svgr_{t_name}"] = int(s_c['rotate'])
+                if 'stroke_width' in s_c: st.session_state[f"swd_{t_name}"] = int(s_c['stroke_width']) # ←追加
 
             # configを更新
             temp_config["svgs"] = json_svgs
@@ -456,7 +485,7 @@ with st.sidebar:
     st.markdown('<p class="std-label">比率設定 (%)</p>', unsafe_allow_html=True)
     saved_r = conf.get("layout", {}).get("ratios", [])
     if layout == "2コマ (縦並び)":
-        ratios = [st.number_input("上段高さ", 0, 100, int(saved_r[0]) if len(saved_r) > 0 else 50, step=10)]
+        ratios = [st.number_input("比率1", 0, 100, int(saved_r[0]) if len(saved_r) > 0 else 50, step=10)]
     elif layout in ["3コマ (縦並び)", "3コマ (上段１つ、下段２つ)", "3コマ (上段２つ、下段１つ)"]:
         r1 = st.number_input("比率1", 0, 100, int(saved_r[0]) if len(saved_r) > 0 else (33 if "縦" in layout else 50), step=10)
         r2 = st.number_input("比率2", 0, 100, int(saved_r[1]) if len(saved_r) > 1 else (33 if "縦" in layout else 50), step=10)
@@ -577,6 +606,8 @@ with st.sidebar:
             f_alpha = col_c2.number_input("塗り透過 (0-1.0)", 0.0, 1.0, float(s_data.get('fill_alpha', 1.0)), step=0.1, key=f"fa_{target_name}")
             s_color = col_c1.text_input("枠線色", s_data.get('stroke_color', "#000000"), key=f"sc_{target_name}")
             s_alpha = col_c2.number_input("枠線透過 (0-1.0)", 0.0, 1.0, float(s_data.get('stroke_alpha', 1.0)), step=0.1, key=f"sa_{target_name}")
+            s_width = col_c1.number_input("枠線幅", 0, 500, int(s_data.get('stroke_width', 2)), step=1, key=f"swd_{target_name}")
+
             col1, col2 = st.columns(2)
             svg_w = col1.number_input("幅", 10, 4000, int(s_data.get('w', default_w)), step=10, key=f"sw_{target_name}")
             svg_h = col2.number_input("高", 10, 4000, int(s_data.get('h', default_h)), step=10, key=f"sh_{target_name}")
@@ -587,7 +618,7 @@ with st.sidebar:
             svg_rot = st.number_input("回転", 0, 360, int(s_data.get('rotate', 0)), step=10, key=f"svgr_{target_name}")
             svg_settings.append({
                 'filename': target_name, 'content': target_svg['content'], 'w': svg_w, 'h': svg_h, 'x': svg_x, 'y': svg_y, 
-                'rotate': svg_rot, 'flip_h': sfh, 'flip_v': sfv, 'color': f_color, 'fill_alpha': f_alpha, 'stroke_color': s_color, 'stroke_alpha': s_alpha
+                'rotate': svg_rot, 'flip_h': sfh, 'flip_v': sfv, 'color': f_color, 'fill_alpha': f_alpha, 'stroke_color': s_color, 'stroke_alpha': s_alpha, 'stroke_width': s_width
             })
 
     # テキスト設定
