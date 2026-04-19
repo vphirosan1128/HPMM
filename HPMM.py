@@ -180,7 +180,9 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
         content = re.sub(r'stroke="white"', f'stroke="{c1}" stroke-opacity="{a2}"', content, flags=re.IGNORECASE)
         content = re.sub(r'stroke="black"', f'stroke="{c2}" stroke-opacity="{a2}"', content, flags=re.IGNORECASE)
 
-        clean_svg = re.sub(r'\s(width|height)="[^"]*"', '', content)
+        # clean_svg = re.sub(r'\s(width|height)="[^"]*"', '', content)
+        clean_svg = re.sub(r'(<svg[^>]*?)\s(?:width|height)="[^"]*"', r'\1', content, count=2, flags=re.IGNORECASE)
+
         if '<svg' in clean_svg and 'preserveAspectRatio' not in clean_svg:
             clean_svg = clean_svg.replace('<svg', '<svg preserveAspectRatio="none"')
         
