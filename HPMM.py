@@ -594,6 +594,7 @@ with st.sidebar:
         if not target_svg: continue
         s_data = next((s for s in saved_svgs if s.get('filename') == target_name), {})
         with st.expander(f"SVG設定: {target_name}"):
+
             # 元の比率からデフォルトサイズを計算
             orig_w, orig_h = get_svg_original_ratio(target_svg['content'])
             if orig_w >= orig_h:
@@ -601,26 +602,50 @@ with st.sidebar:
             else:
                 default_h, default_w = 400, int(400 * (orig_w / orig_h))
 
+# 元の比率からデフォルトサイズを計算
+            orig_w, orig_h = get_svg_original_ratio(target_svg['content'])
+            if orig_w >= orig_h:
+                default_w, default_h = 400, int(400 * (orig_h / orig_w))
+            else:
+                default_h, default_w = 400, int(400 * (orig_w / orig_h))
+
+            # --- 1. ここでセッションステートを初期化する（エラー回避のための必須処理） ---
+            if f"fc_{target_name}" not in st.session_state: st.session_state[f"fc_{target_name}"] = s_data.get('color', "#FFFFFF")
+            if f"fa_{target_name}" not in st.session_state: st.session_state[f"fa_{target_name}"] = float(s_data.get('fill_alpha', 1.0))
+            if f"sc_{target_name}" not in st.session_state: st.session_state[f"sc_{target_name}"] = s_data.get('stroke_color', "#000000")
+            if f"sa_{target_name}" not in st.session_state: st.session_state[f"sa_{target_name}"] = float(s_data.get('stroke_alpha', 1.0))
+            if f"swd_{target_name}" not in st.session_state: st.session_state[f"swd_{target_name}"] = int(s_data.get('stroke_width', 2))
+            
+            if f"sw_{target_name}" not in st.session_state: st.session_state[f"sw_{target_name}"] = int(s_data.get('w', default_w))
+            if f"sh_{target_name}" not in st.session_state: st.session_state[f"sh_{target_name}"] = int(s_data.get('h', default_h))
+            if f"sfh_{target_name}" not in st.session_state: st.session_state[f"sfh_{target_name}"] = s_data.get('flip_h', False)
+            if f"sfv_{target_name}" not in st.session_state: st.session_state[f"sfv_{target_name}"] = s_data.get('flip_v', False)
+            if f"sx_{target_name}" not in st.session_state: st.session_state[f"sx_{target_name}"] = int(s_data.get('x', 100))
+            if f"sy_{target_name}" not in st.session_state: st.session_state[f"sy_{target_name}"] = int(s_data.get('y', 100))
+            if f"svgr_{target_name}" not in st.session_state: st.session_state[f"svgr_{target_name}"] = int(s_data.get('rotate', 0))
+
+            # --- 2. ウィジェットからは「初期値(value)」を削除し、引数をキーワードで明示する ---
             col_c1, col_c2 = st.columns(2)
-            f_color = col_c1.text_input("塗り色", s_data.get('color', "#FFFFFF"), key=f"fc_{target_name}")
-            f_alpha = col_c2.number_input("塗り透過 (0-1.0)", 0.0, 1.0, float(s_data.get('fill_alpha', 1.0)), step=0.1, key=f"fa_{target_name}")
-            s_color = col_c1.text_input("枠線色", s_data.get('stroke_color', "#000000"), key=f"sc_{target_name}")
-            s_alpha = col_c2.number_input("枠線透過 (0-1.0)", 0.0, 1.0, float(s_data.get('stroke_alpha', 1.0)), step=0.1, key=f"sa_{target_name}")
-            s_width = col_c1.number_input("枠線幅", 0, 500, int(s_data.get('stroke_width', 2)), step=1, key=f"swd_{target_name}")
+            f_color = col_c1.text_input("塗り色", key=f"fc_{target_name}")
+            f_alpha = col_c2.number_input("塗り透過 (0-1.0)", min_value=0.0, max_value=1.0, step=0.1, key=f"fa_{target_name}")
+            s_color = col_c1.text_input("枠線色", key=f"sc_{target_name}")
+            s_alpha = col_c2.number_input("枠線透過 (0-1.0)", min_value=0.0, max_value=1.0, step=0.1, key=f"sa_{target_name}")
+            s_width = col_c1.number_input("枠線幅", min_value=0, max_value=500, step=1, key=f"swd_{target_name}")
 
             col1, col2 = st.columns(2)
-            svg_w = col1.number_input("幅", 10, 4000, int(s_data.get('w', default_w)), step=10, key=f"sw_{target_name}")
-            svg_h = col2.number_input("高", 10, 4000, int(s_data.get('h', default_h)), step=10, key=f"sh_{target_name}")
-            sfh = st.checkbox("横反転", s_data.get('flip_h', False), key=f"sfh_{target_name}")
-            sfv = st.checkbox("縦反転", s_data.get('flip_v', False), key=f"sfv_{target_name}")
-            svg_x = st.number_input("X位置", -1000, 4000, int(s_data.get('x', 100)), step=10, key=f"sx_{target_name}")
-            svg_y = st.number_input("Y位置", -1000, 4000, int(s_data.get('y', 100)), step=10, key=f"sy_{target_name}")
-            svg_rot = st.number_input("回転", 0, 360, int(s_data.get('rotate', 0)), step=10, key=f"svgr_{target_name}")
+            svg_w = col1.number_input("幅", min_value=10, max_value=4000, step=10, key=f"sw_{target_name}")
+            svg_h = col2.number_input("高", min_value=10, max_value=4000, step=10, key=f"sh_{target_name}")
+            sfh = st.checkbox("横反転", key=f"sfh_{target_name}")
+            sfv = st.checkbox("縦反転", key=f"sfv_{target_name}")
+            svg_x = st.number_input("X位置", min_value=-1000, max_value=4000, step=10, key=f"sx_{target_name}")
+            svg_y = st.number_input("Y位置", min_value=-1000, max_value=4000, step=10, key=f"sy_{target_name}")
+            svg_rot = st.number_input("回転", min_value=0, max_value=360, step=10, key=f"svgr_{target_name}")
+
             svg_settings.append({
                 'filename': target_name, 'content': target_svg['content'], 'w': svg_w, 'h': svg_h, 'x': svg_x, 'y': svg_y, 
                 'rotate': svg_rot, 'flip_h': sfh, 'flip_v': sfv, 'color': f_color, 'fill_alpha': f_alpha, 'stroke_color': s_color, 'stroke_alpha': s_alpha, 'stroke_width': s_width
             })
-
+                        
     # テキスト設定
     num_txt = st.number_input("テキスト数 (最大40個)", 0, 40, num_txt_val)
     saved_txts = conf.get("texts", [])
