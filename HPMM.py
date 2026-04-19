@@ -248,12 +248,12 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
 
 def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
     js = f"""
-    <body style="margin:0; background:transparent; display: flex; justify-content: flex-start;">
-        <button id="btn" style="
-            display: inline-flex; align-items: center; justify-content: center; font-weight: 400; padding: 0.25rem 0.75rem; border-radius: 0.5rem;
+    <body style="margin:0; background:transparent; display: flex; justify-content: flex-start; gap: 10px;">
+        <button id="btn_normal" style="
+            display: inline-flex; align-items: center; justify-content: center; font-weight: 400; padding: 0.25rem 0.5rem; border-radius: 0.5rem;
             margin: 0px; line-height: 1.6; color: rgb(250, 250, 250); user-select: none; background-color: rgb(38, 39, 48); border: 1px solid rgba(250, 250, 250, 0.2);
-            cursor: pointer; font-family: 'Source Sans Pro', sans-serif; font-size: 1rem; transition: background-color 200ms, border-color 200ms; white-space: nowrap;
-            width: 100%;
+            cursor: pointer; font-family: 'Source Sans Pro', sans-serif; font-size: 0.9rem; transition: background-color 200ms, border-color 200ms; white-space: nowrap;
+            flex: 1;
         " onmouseover="this.style.backgroundColor='rgba(250, 250, 250, 0.1)'; this.style.borderColor='rgba(250, 250, 250, 0.4)';" 
            onmouseout="this.style.backgroundColor='rgb(38, 39, 48)'; this.style.borderColor='rgba(250, 250, 250, 0.2)';"
            onmousedown="this.style.backgroundColor='rgba(250, 250, 250, 0.2)';"
@@ -261,12 +261,25 @@ def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
         >
             画像を保存
         </button>
+        <button id="btn_trans" style="
+            display: inline-flex; align-items: center; justify-content: center; font-weight: 400; padding: 0.25rem 0.5rem; border-radius: 0.5rem;
+            margin: 0px; line-height: 1.6; color: rgb(250, 250, 250); user-select: none; background-color: rgb(38, 39, 48); border: 1px solid rgba(250, 250, 250, 0.2);
+            cursor: pointer; font-family: 'Source Sans Pro', sans-serif; font-size: 0.9rem; transition: background-color 200ms, border-color 200ms; white-space: nowrap;
+            flex: 1;
+        " onmouseover="this.style.backgroundColor='rgba(250, 250, 250, 0.1)'; this.style.borderColor='rgba(250, 250, 250, 0.4)';" 
+           onmouseout="this.style.backgroundColor='rgb(38, 39, 48)'; this.style.borderColor='rgba(250, 250, 250, 0.2)';"
+           onmousedown="this.style.backgroundColor='rgba(250, 250, 250, 0.2)';"
+           onmouseup="this.style.backgroundColor='rgba(250, 250, 250, 0.1)';"
+        >
+            透過保存 (SVG/文字)
+        </button>
         
     <script>
-        document.getElementById('btn').onclick = async (e) => {{
+        // isTransフラグで背景を描画するかどうかを制御します
+        async function saveCanvas(e, isTrans) {{
             try {{
                 const originalText = e.target.innerText;
-                e.target.innerText = \"保存中...\";
+                e.target.innerText = "保存中...";
                 const cvs = document.createElement('canvas');
                 cvs.width = {c_w};
                 cvs.height = {c_h};
@@ -274,10 +287,15 @@ def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
                 const load = src => new Promise((resolve, reject) => {{ 
                     const i = new Image(); 
                     i.onload = () => resolve(i); 
-                    i.onerror = () => reject(new Error(\"Load failed\"));
+                    i.onerror = () => reject(new Error("Load failed"));
                     i.src = src; 
                 }});
-                ctx.drawImage(await load(\"data:image/png;base64,{img_b64}\"), 0, 0);
+                
+                // ★ここがポイントです：isTransがfalse（通常保存）の時だけ背景を描画する
+                if (!isTrans) {{
+                    ctx.drawImage(await load("data:image/png;base64,{img_b64}"), 0, 0);
+                }}
+
                 const svgs = {json.dumps(svg_data)};
                 for (const s of svgs) {{
                     ctx.save();
@@ -287,6 +305,7 @@ def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
                     ctx.drawImage(await load(s.src), -s.w/2, -s.h/2, s.w, s.h);
                     ctx.restore();
                 }}
+                
                 const txts = {json.dumps(txt_settings)};
                 txts.forEach(t => {{
                     if (!t.text) return;
@@ -294,32 +313,29 @@ def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
                     ctx.translate(t.x, t.y);
                     ctx.rotate(t.rotate * Math.PI / 180);
                     ctx.scale(t.sx/100.0, t.sy/100.0);
-                    const style = t.italic ? \"italic \" : \"\";
-                    const weight = t.bold ? \"bold \" : \"\";
-                    ctx.font = style + weight + t.size + \"px '\" + t.font + \"', sans-serif\";
-                    ctx.textBaseline = \"top\";
+                    const style = t.italic ? "italic " : "";
+                    const weight = t.bold ? "bold " : "";
+                    ctx.font = style + weight + t.size + "px '" + t.font + "', sans-serif";
+                    ctx.textBaseline = "top";
                     
                     const lines = t.text.trimEnd().split('\\n');
                     
                     const spacing = Number(t.letter_spacing) || 0;
                     const lh = Number(t.line_height) || 1.2;
                     lines.forEach((line, lineIdx) => {{
-                        if (t.writing_mode === \"縦書き\") {{
-
-                            // ★ここから修正
+                        if (t.writing_mode === "縦書き") {{
                             const totalLinesWidth = (lines.length - 1) * t.size * lh;
                             const xOffset = totalLinesWidth - (lineIdx * t.size * lh);
 
-                            ctx.textAlign = "center"; // 文字の芯を揃える
+                            ctx.textAlign = "center"; 
                             const charCenterX = xOffset + (t.size / 2);
-                            // ★ここまで修正                            
                             
                             [...line].forEach((char, charIdx) => {{
                                 const yOffset = charIdx * (t.size + spacing);
                                 if (t.outline_w > 0) {{
                                     ctx.strokeStyle = t.outline_c; 
                                     ctx.lineWidth = t.outline_w * 2;
-                                    ctx.lineJoin = \"round\"; 
+                                    ctx.lineJoin = "round"; 
                                     ctx.strokeText(char, xOffset + (t.size / 2), yOffset);
                                 }}
                                 ctx.fillStyle = t.color; 
@@ -332,7 +348,7 @@ def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
                                 if (t.outline_w > 0) {{
                                     ctx.strokeStyle = t.outline_c; 
                                     ctx.lineWidth = t.outline_w * 2;
-                                    ctx.lineJoin = \"round\"; 
+                                    ctx.lineJoin = "round"; 
                                     ctx.strokeText(char, xAcc, yOffset);
                                 }}
                                 ctx.fillStyle = t.color; 
@@ -343,15 +359,23 @@ def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
                     }});
                     ctx.restore();
                 }});
-                const a = document.createElement('a'); a.download = 'manga.png'; 
-                a.href = cvs.toDataURL('image/png'); a.click();
+                
+                const a = document.createElement('a'); 
+                // 透過保存の場合はファイル名を少し変えて区別しやすくしています
+                a.download = isTrans ? 'manga_transparent.png' : 'manga.png'; 
+                a.href = cvs.toDataURL('image/png'); 
+                a.click();
                 setTimeout(() => {{ e.target.innerText = originalText; }}, 1000);
             }} catch (err) {{
-                console.error(\"Save Error:\", err);
-                alert(\"保存中にエラーが発生しました。\");
-                e.target.innerText = \"画像を保存\";
+                console.error("Save Error:", err);
+                alert("保存中にエラーが発生しました。");
+                e.target.innerText = isTrans ? "透過保存 (SVG/文字)" : "画像を保存";
             }}
-        }};
+        }}
+
+        // 2つのボタンそれぞれに、クリック時の処理を割り当てます
+        document.getElementById('btn_normal').onclick = (e) => saveCanvas(e, false);
+        document.getElementById('btn_trans').onclick = (e) => saveCanvas(e, true);
     </script>
     </body>
     """
