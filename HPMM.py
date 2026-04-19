@@ -248,16 +248,14 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
 
 def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
     js = f"""
-    <body style="margin:0; background:transparent; display: flex; justify-content: flex-start; gap: 10px;">
+    <body style="margin:0; background:transparent; display: flex; flex-direction: column; height: 100px; gap: 10px;">        
         <button id="btn_normal" style="
             display: inline-flex; align-items: center; justify-content: center; font-weight: 400; padding: 0.25rem 0.5rem; border-radius: 0.5rem;
             margin: 0px; line-height: 1.6; color: rgb(250, 250, 250); user-select: none; background-color: rgb(38, 39, 48); border: 1px solid rgba(250, 250, 250, 0.2);
             cursor: pointer; font-family: 'Source Sans Pro', sans-serif; font-size: 0.9rem; transition: background-color 200ms, border-color 200ms; white-space: nowrap;
-            flex: 1;
+            width: 100%; height: 45px;
         " onmouseover="this.style.backgroundColor='rgba(250, 250, 250, 0.1)'; this.style.borderColor='rgba(250, 250, 250, 0.4)';" 
            onmouseout="this.style.backgroundColor='rgb(38, 39, 48)'; this.style.borderColor='rgba(250, 250, 250, 0.2)';"
-           onmousedown="this.style.backgroundColor='rgba(250, 250, 250, 0.2)';"
-           onmouseup="this.style.backgroundColor='rgba(250, 250, 250, 0.1)';"
         >
             画像を保存
         </button>
@@ -265,15 +263,13 @@ def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
             display: inline-flex; align-items: center; justify-content: center; font-weight: 400; padding: 0.25rem 0.5rem; border-radius: 0.5rem;
             margin: 0px; line-height: 1.6; color: rgb(250, 250, 250); user-select: none; background-color: rgb(38, 39, 48); border: 1px solid rgba(250, 250, 250, 0.2);
             cursor: pointer; font-family: 'Source Sans Pro', sans-serif; font-size: 0.9rem; transition: background-color 200ms, border-color 200ms; white-space: nowrap;
-            flex: 1;
+            width: 100%; height: 45px;
         " onmouseover="this.style.backgroundColor='rgba(250, 250, 250, 0.1)'; this.style.borderColor='rgba(250, 250, 250, 0.4)';" 
            onmouseout="this.style.backgroundColor='rgb(38, 39, 48)'; this.style.borderColor='rgba(250, 250, 250, 0.2)';"
-           onmousedown="this.style.backgroundColor='rgba(250, 250, 250, 0.2)';"
-           onmouseup="this.style.backgroundColor='rgba(250, 250, 250, 0.1)';"
         >
-            透過保存 (SVG/文字)
-        </button>
-        
+            SVG/文字 のみ保存
+        </button>        
+
     <script>
         // isTransフラグで背景を描画するかどうかを制御します
         async function saveCanvas(e, isTrans) {{
@@ -626,7 +622,7 @@ with st.sidebar:
             else:
                 default_h, default_w = 400, int(400 * (orig_w / orig_h))
 
-# 元の比率からデフォルトサイズを計算
+            # 元の比率からデフォルトサイズを計算
             orig_w, orig_h = get_svg_original_ratio(target_svg['content'])
             if orig_w >= orig_h:
                 default_w, default_h = 400, int(400 * (orig_h / orig_w))
@@ -732,5 +728,5 @@ if (st.session_state.cached_imgs and valid_state) or st.session_state.trigger_dr
     img_b64, svg_data = render_manga_preview(st.session_state.cached_imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, svg_settings, txt_settings, preview_zoom)
     with save_button_placeholder:
         save_js = generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h)
-        components.html(save_js, height=50)
+        components.html(save_js, height=100)
     st.session_state.trigger_draw = False
