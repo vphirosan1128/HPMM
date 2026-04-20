@@ -257,7 +257,17 @@ def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
         " onmouseover="this.style.backgroundColor='rgba(250, 250, 250, 0.1)'; this.style.borderColor='rgba(250, 250, 250, 0.4)';" 
            onmouseout="this.style.backgroundColor='rgb(38, 39, 48)'; this.style.borderColor='rgba(250, 250, 250, 0.2)';"
         >
-            画像を保存
+            全画像を保存
+        </button>
+        <button id="btn_bg_only" style="
+            display: inline-flex; align-items: center; justify-content: center; font-weight: 400; padding: 0.25rem 0.5rem; border-radius: 0.5rem;
+            margin: 0px; line-height: 1.6; color: rgb(250, 250, 250); user-select: none; background-color: rgb(38, 39, 48); border: 1px solid rgba(250, 250, 250, 0.2);
+            cursor: pointer; font-family: 'Source Sans Pro', sans-serif; font-size: 0.9rem; transition: background-color 200ms, border-color 200ms; white-space: nowrap;
+            width: 100%; height: 45px;
+        " onmouseover="this.style.backgroundColor='rgba(250, 250, 250, 0.1)'; this.style.borderColor='rgba(250, 250, 250, 0.4)';" 
+           onmouseout="this.style.backgroundColor='rgb(38, 39, 48)'; this.style.borderColor='rgba(250, 250, 250, 0.2)';"
+        >
+            背景画像のみ保存
         </button>
         <button id="btn_trans" style="
             display: inline-flex; align-items: center; justify-content: center; font-weight: 400; padding: 0.25rem 0.5rem; border-radius: 0.5rem;
@@ -267,12 +277,12 @@ def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
         " onmouseover="this.style.backgroundColor='rgba(250, 250, 250, 0.1)'; this.style.borderColor='rgba(250, 250, 250, 0.4)';" 
            onmouseout="this.style.backgroundColor='rgb(38, 39, 48)'; this.style.borderColor='rgba(250, 250, 250, 0.2)';"
         >
-            SVG/文字 のみ保存
-        </button>        
-
+            SVG/文字画像 のみ保存
+        </button>
     <script>
-        // isTransフラグで背景を描画するかどうかを制御します
-        async function saveCanvas(e, isTrans) {{
+
+        async function saveCanvas(e, mode) {{
+            
             try {{
                 const originalText = e.target.innerText;
                 e.target.innerText = "保存中...";
@@ -287,78 +297,85 @@ def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
                     i.src = src; 
                 }});
                 
-                // ★ここがポイントです：isTransがfalse（通常保存）の時だけ背景を描画する
-                if (!isTrans) {{
+                // モードが 'trans'（透過保存）以外なら背景を描く
+                if (mode !== 'trans') {{
                     ctx.drawImage(await load("data:image/png;base64,{img_b64}"), 0, 0);
                 }}
 
-                const svgs = {json.dumps(svg_data)};
-                for (const s of svgs) {{
-                    ctx.save();
-                    ctx.translate(s.x + s.w/2, s.y + s.h/2);
-                    ctx.rotate(s.rotate * Math.PI / 180);
-                    ctx.scale(s.flip_h ? -1 : 1, s.flip_v ? -1 : 1);
-                    ctx.drawImage(await load(s.src), -s.w/2, -s.h/2, s.w, s.h);
-                    ctx.restore();
-                }}
-                
-                const txts = {json.dumps(txt_settings)};
-                txts.forEach(t => {{
-                    if (!t.text) return;
-                    ctx.save();
-                    ctx.translate(t.x, t.y);
-                    ctx.rotate(t.rotate * Math.PI / 180);
-                    ctx.scale(t.sx/100.0, t.sy/100.0);
-                    const style = t.italic ? "italic " : "";
-                    const weight = t.bold ? "bold " : "";
-                    ctx.font = style + weight + t.size + "px '" + t.font + "', sans-serif";
-                    ctx.textBaseline = "top";
+                // モードが 'bg'（背景のみ）以外ならSVGと文字を描く
+                if (mode !== 'bg') {{
                     
-                    const lines = t.text.trimEnd().split('\\n');
-                    
-                    const spacing = Number(t.letter_spacing) || 0;
-                    const lh = Number(t.line_height) || 1.2;
-                    lines.forEach((line, lineIdx) => {{
-                        if (t.writing_mode === "縦書き") {{
-                            const totalLinesWidth = (lines.length - 1) * t.size * lh;
-                            const xOffset = totalLinesWidth - (lineIdx * t.size * lh);
+                    const svgs = {json.dumps(svg_data)};
+                    for (const s of svgs) {{
+                        ctx.save();
+                        ctx.translate(s.x + s.w/2, s.y + s.h/2);
+                        ctx.rotate(s.rotate * Math.PI / 180);
+                        ctx.scale(s.flip_h ? -1 : 1, s.flip_v ? -1 : 1);
+                        ctx.drawImage(await load(s.src), -s.w/2, -s.h/2, s.w, s.h);
+                        ctx.restore();
+                    }}
+                                        
+                    const txts = {json.dumps(txt_settings)};
+                    txts.forEach(t => {{
+                        if (!t.text) return;
+                        ctx.save();
+                        ctx.translate(t.x, t.y);
+                        ctx.rotate(t.rotate * Math.PI / 180);
+                        ctx.scale(t.sx/100.0, t.sy/100.0);
+                        const style = t.italic ? "italic " : "";
+                        const weight = t.bold ? "bold " : "";
+                        ctx.font = style + weight + t.size + "px '" + t.font + "', sans-serif";
+                        ctx.textBaseline = "top";
+                        
+                        const lines = t.text.trimEnd().split('\\n');
+                        
+                        const spacing = Number(t.letter_spacing) || 0;
+                        const lh = Number(t.line_height) || 1.2;
+                        lines.forEach((line, lineIdx) => {{
+                            if (t.writing_mode === "縦書き") {{
+                                const totalLinesWidth = (lines.length - 1) * t.size * lh;
+                                const xOffset = totalLinesWidth - (lineIdx * t.size * lh);
 
-                            ctx.textAlign = "center"; 
-                            const charCenterX = xOffset + (t.size / 2);
-                            
-                            [...line].forEach((char, charIdx) => {{
-                                const yOffset = charIdx * (t.size + spacing);
-                                if (t.outline_w > 0) {{
-                                    ctx.strokeStyle = t.outline_c; 
-                                    ctx.lineWidth = t.outline_w * 2;
-                                    ctx.lineJoin = "round"; 
-                                    ctx.strokeText(char, xOffset + (t.size / 2), yOffset);
-                                }}
-                                ctx.fillStyle = t.color; 
-                                ctx.fillText(char, xOffset + (t.size / 2), yOffset);
-                            }});
-                        }} else {{
-                            const yOffset = lineIdx * t.size * lh;
-                            let xAcc = 0;
-                            [...line].forEach((char) => {{
-                                if (t.outline_w > 0) {{
-                                    ctx.strokeStyle = t.outline_c; 
-                                    ctx.lineWidth = t.outline_w * 2;
-                                    ctx.lineJoin = "round"; 
-                                    ctx.strokeText(char, xAcc, yOffset);
-                                }}
-                                ctx.fillStyle = t.color; 
-                                ctx.fillText(char, xAcc, yOffset);
-                                xAcc += ctx.measureText(char).width + spacing;
-                            }});
-                        }}
+                                ctx.textAlign = "center"; 
+                                const charCenterX = xOffset + (t.size / 2);
+                                
+                                [...line].forEach((char, charIdx) => {{
+                                    const yOffset = charIdx * (t.size + spacing);
+                                    if (t.outline_w > 0) {{
+                                        ctx.strokeStyle = t.outline_c; 
+                                        ctx.lineWidth = t.outline_w * 2;
+                                        ctx.lineJoin = "round"; 
+                                        ctx.strokeText(char, xOffset + (t.size / 2), yOffset);
+                                    }}
+                                    ctx.fillStyle = t.color; 
+                                    ctx.fillText(char, xOffset + (t.size / 2), yOffset);
+                                }});
+                            }} else {{
+                                const yOffset = lineIdx * t.size * lh;
+                                let xAcc = 0;
+                                [...line].forEach((char) => {{
+                                    if (t.outline_w > 0) {{
+                                        ctx.strokeStyle = t.outline_c; 
+                                        ctx.lineWidth = t.outline_w * 2;
+                                        ctx.lineJoin = "round"; 
+                                        ctx.strokeText(char, xAcc, yOffset);
+                                    }}
+                                    ctx.fillStyle = t.color; 
+                                    ctx.fillText(char, xAcc, yOffset);
+                                    xAcc += ctx.measureText(char).width + spacing;
+                                }});
+                            }}
+                        }});
+                        ctx.restore();
                     }});
-                    ctx.restore();
-                }});
-                
+                }}                
+
                 const a = document.createElement('a'); 
                 // 透過保存の場合はファイル名を少し変えて区別しやすくしています
-                a.download = isTrans ? 'manga_transparent.png' : 'manga.png'; 
+                if (mode === 'trans') a.download = 'manga_transparent.png';
+                else if (mode === 'bg') a.download = 'manga_background.png';
+                else a.download = 'manga.png';                
+                
                 a.href = cvs.toDataURL('image/png'); 
                 a.click();
                 setTimeout(() => {{ e.target.innerText = originalText; }}, 1000);
@@ -369,9 +386,10 @@ def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
             }}
         }}
 
-        // 2つのボタンそれぞれに、クリック時の処理を割り当てます
-        document.getElementById('btn_normal').onclick = (e) => saveCanvas(e, false);
-        document.getElementById('btn_trans').onclick = (e) => saveCanvas(e, true);
+        document.getElementById('btn_normal').onclick = (e) => saveCanvas(e, 'all');
+        document.getElementById('btn_trans').onclick = (e) => saveCanvas(e, 'trans');
+        document.getElementById('btn_bg_only').onclick = (e) => saveCanvas(e, 'bg');    
+    
     </script>
     </body>
     """
@@ -728,5 +746,5 @@ if (st.session_state.cached_imgs and valid_state) or st.session_state.trigger_dr
     img_b64, svg_data = render_manga_preview(st.session_state.cached_imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, svg_settings, txt_settings, preview_zoom)
     with save_button_placeholder:
         save_js = generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h)
-        components.html(save_js, height=100)
+        components.html(save_js, height=130)
     st.session_state.trigger_draw = False
