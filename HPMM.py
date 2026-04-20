@@ -120,13 +120,90 @@ def create_manga_page(images, layout_type, canvas_w, canvas_h, bg_hex, lw, img_s
     elif layout_type == "3コマ (上段１つ、下段２つ)": boxes = [{"rect": (0, 0, 1, r[0]), "edges": (1,1,0.5,1)}, {"rect": (0, r[0], r[1], 1-r[0]), "edges": (0.5,1,1,0.5)}, {"rect": (r[1], r[0], 1-r[1], 1-r[0]), "edges": (0.5,0.5,1,1)}]
     elif layout_type == "3コマ (上段２つ、下段１つ)": boxes = [{"rect": (0, 0, r[1], r[0]), "edges": (1,1,0.5,0.5)}, {"rect": (r[1], 0, 1-r[1], r[0]), "edges": (1,0.5,0.5,1)}, {"rect": (0, r[0], 1, 1-r[0]), "edges": (0.5,1,1,1)}]
     elif layout_type == "4コマ (田の字・横切優先)": boxes = [{"rect": (0, 0, r[1], r[0]), "edges": (1,1,0.5,0.5)}, {"rect": (r[1], 0, 1-r[1], r[0]), "edges": (1,0.5,0.5,1)}, {"rect": (0, r[0], r[2], 1-r[0]), "edges": (0.5,1,1,0.5)}, {"rect": (r[2], r[0], 1-r[2], 1-r[0]), "edges": (0.5,0.5,1,1)}]
-    
+
+    # --- ここから追加 ---
     elif layout_type == "4コマ (田の字・縦切優先)":
         boxes = [            {"rect": (0, 0, r[0], r[1]), "edges": (1,1,0.5,0.5)}, # 左上
             {"rect": (0, r[1], r[0], 1-r[1]), "edges": (0.5,1,1,0.5)}, # 左下
             {"rect": (r[0], 0, 1-r[0], r[2]), "edges": (1,0.5,0.5,1)}, # 右上
             {"rect": (r[0], r[2], 1-r[0], 1-r[2]), "edges": (0.5,0.5,1,1)} # 右下
         ]
+
+    elif layout_type == "3コマ (左１つ、右２つ)":
+        # r[0]が左右を分ける縦線、r[1]が右側を上下に分ける横線の位置
+        boxes = [
+            {"rect": (0, 0, r[0], 1), "edges": (1,1,1,0.5)},        # 左（縦長）
+            {"rect": (r[0], 0, 1-r[0], r[1]), "edges": (1,0.5,0.5,1)}, # 右上
+            {"rect": (r[0], r[1], 1-r[0], 1-r[1]), "edges": (0.5,0.5,1,1)} # 右下
+        ]
+
+    elif layout_type == "3コマ (左２つ、右１つ)":
+        # r[0]が左右を分ける縦線、r[1]が左側を上下に分ける横線の位置
+        boxes = [
+            {"rect": (0, 0, r[0], r[1]), "edges": (1,1,0.5,0.5)},   # 左上
+            {"rect": (0, r[1], r[0], 1-r[1]), "edges": (0.5,1,1,0.5)}, # 左下
+            {"rect": (r[0], 0, 1-r[0], 1), "edges": (1,0.5,1,1)}        # 右（縦長）
+        ]
+
+    elif layout_type == "4コマ (上段３つ、下段１つ)":
+        # r[1], r[2] は 0〜100 の位置座標（左からの距離）
+        boxes = [
+            {"rect": (0, 0, r[1], r[0]), "edges": (1,1,0.5,0.5)}, 
+            {"rect": (r[1], 0, r[2], r[0]), "edges": (1,0.5,0.5,0.5)},
+            {"rect": (r[1]+r[2], 0, 1-(r[1]+r[2]), r[0]), "edges": (1,0.5,0.5,1)},
+            {"rect": (0, r[0], 1, 1-r[0]), "edges": (0.5,1,1,1)}
+        ]
+    elif layout_type == "4コマ (上段１つ、下段３つ)":
+        boxes = [
+            {"rect": (0, 0, 1, 1-r[0]), "edges": (1,1,0.5,1)},
+            {"rect": (0, r[0], r[1], r[0]), "edges": (0.5,1,1,0.5)}, 
+            {"rect": (r[1], r[0], r[2], r[0]), "edges": (0.5,0.5,1,0.5)}, # ここ: r[2]がr[1]より大きい前提
+            {"rect": (r[1]+r[2], r[0], 1-r[1]-r[2], r[0]), "edges": (0.5,0.5,1,1)}
+        ]
+
+    elif layout_type == "4コマ (左３つ、右１つ)":
+        boxes = [
+            {"rect": (0, 0, r[0], r[1]), "edges": (1,1,0.5,0.5)},
+            {"rect": (0, r[1], r[0], r[2]), "edges": (0.5,1,0.5,0.5)}, # ここ: r[2]-r[1]
+            {"rect": (0, r[1]+r[2], r[0], 1-r[1]-r[2]), "edges": (0.5,1,1,0.5)},
+            {"rect": (r[0], 0, 1-r[0], 1), "edges": (1,0.5,1,1)}
+        ]
+
+    elif layout_type == "4コマ (左１つ、右３つ)":
+        boxes = [
+            {"rect": (0, 0, r[0], 1), "edges": (1,1,1,0.5)},
+            {"rect": (r[0], 0, 1-r[0], r[1]), "edges": (1,0.5,0.5,1)},
+            {"rect": (r[0], r[1], 1-r[0], r[2]), "edges": (0.5,0.5,0.5,1)}, # ここ: r[2]-r[1]
+            {"rect": (r[0], r[1]+r[2], 1-r[0], 1-r[1]-r[2]), "edges": (0.5,0.5,1,1)}
+        ]
+
+    elif layout_type == "4コマ (上段２つ、中段１つ、下段１つ)":
+        boxes = [
+            {"rect": (0,        0,          r[2],   r[0]),          "edges": (1,1,0.5,0.5)},
+            {"rect": (r[2],     0,          1-r[2], r[0]),          "edges": (1,0.5,0.5,1)}, 
+            {"rect": (0,        r[0],       1,      r[1]),          "edges": (0.5,1,0.5,1)},
+            {"rect": (0,        r[0]+r[1],  1,      1-r[0]-r[1]),   "edges": (0.5,1,1,1)}
+        ]
+
+    elif layout_type == "4コマ (上段１つ、中段２つ、下段１つ)":
+        boxes = [
+            {"rect": (0,        0,          1,      r[0]),          "edges": (1,1,0.5,1)},
+            {"rect": (0,        r[0],       r[2],   r[1]),          "edges": (0.5,1,0.5,0.5)},
+            {"rect": (r[2],     r[0],       1-r[2], r[1]),          "edges": (0.5,0.5,0.5,1)}, 
+            {"rect": (0,        r[0]+r[1],  1,      1-r[0]-r[1]),   "edges": (0.5,1,1,1)}
+        ]
+
+    elif layout_type == "4コマ (上段１つ、中段１つ、下段２つ)":
+        boxes = [
+            {"rect": (0,        0,          1,      r[0]),          "edges": (1,1,0.5,1)},
+            {"rect": (0,        r[0],       1,      r[1]),          "edges": (0.5,1,0.5,1)},
+            {"rect": (0,        r[0]+r[1],  r[2],   1-r[0]-r[1]),   "edges": (0.5,1,1,0.5)},
+            {"rect": (r[2],     r[0]+r[1],  1-r[2], 1-r[0]-r[1]),   "edges": (0.5,0.5,1,1)} 
+        ]
+
+        # x, y, w, h 上左下右
+
+    # --- ここまで追加 ---
 
     for i, b in enumerate(boxes):
         if i >= len(images): break
@@ -523,7 +600,27 @@ with st.sidebar:
     show_grid = st.checkbox("グリッドを表示", value=False)
     grid_size = st.number_input("グリッド間隔 (px)", 10, 500, 100, step=10) if show_grid else 100
 
-    layout_list = ["1コマ (全画面)", "2コマ (縦並び)", "3コマ (縦並び)", "4コマ (縦並び)", "2コマ (横並び)", "3コマ (上段１つ、下段２つ)", "3コマ (上段２つ、下段１つ)", "4コマ (田の字・横切優先)","4コマ (田の字・縦切優先)"]
+    layout_list = [
+        "1コマ (全画面)", 
+        "2コマ (縦並び)", 
+        "3コマ (縦並び)", 
+        "4コマ (縦並び)", 
+        "2コマ (横並び)", 
+        "3コマ (上段１つ、下段２つ)", 
+        "3コマ (上段２つ、下段１つ)", 
+        "3コマ (左１つ、右２つ)",
+        "3コマ (左２つ、右１つ)",
+        "4コマ (田の字・横切優先)",
+        "4コマ (田の字・縦切優先)",
+        "4コマ (上段３つ、下段１つ)", 
+        "4コマ (上段１つ、下段３つ)",
+        "4コマ (左３つ、右１つ)", 
+        "4コマ (左１つ、右３つ)",
+        "4コマ (上段２つ、中段１つ、下段１つ)", 
+        "4コマ (上段１つ、中段２つ、下段１つ)", 
+        "4コマ (上段１つ、中段１つ、下段２つ)", 
+    ]
+
     saved_layout = conf.get("layout", {}).get("type", "1コマ (全画面)")
     layout = st.selectbox("レイアウト", layout_list, index=layout_list.index(saved_layout) if saved_layout in layout_list else 0)
 
@@ -531,19 +628,47 @@ with st.sidebar:
     saved_r = conf.get("layout", {}).get("ratios", [])
     if layout == "2コマ (縦並び)":
         ratios = [st.number_input("比率1", 0, 100, int(saved_r[0]) if len(saved_r) > 0 else 50, step=10)]
-    elif layout in ["3コマ (縦並び)", "3コマ (上段１つ、下段２つ)", "3コマ (上段２つ、下段１つ)"]:
-        r1 = st.number_input("比率1", 0, 100, int(saved_r[0]) if len(saved_r) > 0 else (33 if "縦" in layout else 50), step=10)
-        r2 = st.number_input("比率2", 0, 100, int(saved_r[1]) if len(saved_r) > 1 else (33 if "縦" in layout else 50), step=10)
-        ratios = [r1, r2]
-        if r1 + r2 > 100 and "縦並び" in layout: valid_state = False
-    elif layout in ["4コマ (縦並び)", "4コマ (田の字・横切優先)", "4コマ (田の字・縦切優先)"]:
-        r1 = st.number_input("比率1", 0, 100, int(saved_r[0]) if len(saved_r) > 0 else (25 if "縦並び" in layout else 50), step=10)
-        r2 = st.number_input("比率2", 0, 100, int(saved_r[1]) if len(saved_r) > 1 else (25 if "縦並び" in layout else 50), step=10)
-        r3 = st.number_input("比率3", 0, 100, int(saved_r[2]) if len(saved_r) > 2 else (25 if "縦並び" in layout else 50), step=10)
-        ratios = [r1, r2, r3]
-        if r1 + r2 + r3 > 100 and "縦並び" in layout: valid_state = False
+
     elif layout == "2コマ (横並び)":
         ratios = [st.number_input("幅比率", 0, 100, int(saved_r[0]) if len(saved_r) > 0 else 50, step=10)]
+
+    elif layout in ["3コマ (縦並び)"]:
+        r1 = st.number_input("比率1", 0, 100, int(saved_r[0]) if len(saved_r) > 0 else 33, step=10)
+        r2 = st.number_input("比率2", 0, 100, int(saved_r[1]) if len(saved_r) > 1 else 33, step=10)
+        ratios = [r1, r2]
+        if r1 + r2 > 100: valid_state = False
+
+    elif layout in ["3コマ (上段１つ、下段２つ)", "3コマ (上段２つ、下段１つ)", "3コマ (左１つ、右２つ)", "3コマ (左２つ、右１つ)"]:
+        r1 = st.number_input("比率1", 0, 100, int(saved_r[0]) if len(saved_r) > 0 else 50, step=10)
+        r2 = st.number_input("比率2", 0, 100, int(saved_r[1]) if len(saved_r) > 1 else 50, step=10)
+        ratios = [r1, r2]
+
+    elif layout in ["4コマ (縦並び)"]:
+        r1 = st.number_input("比率1", 0, 100, int(saved_r[0]) if len(saved_r) > 0 else 25, step=10)
+        r2 = st.number_input("比率2", 0, 100, int(saved_r[1]) if len(saved_r) > 1 else 25, step=10)
+        r3 = st.number_input("比率3", 0, 100, int(saved_r[2]) if len(saved_r) > 2 else 25, step=10)
+        ratios = [r1, r2, r3]
+        if r1 + r2 + r3 > 100: valid_state = False
+
+    elif layout in ["4コマ (田の字・横切優先)", "4コマ (田の字・縦切優先)"]:
+        r1 = st.number_input("比率1", 0, 100, int(saved_r[0]) if len(saved_r) > 0 else 50, step=10)
+        r2 = st.number_input("比率2", 0, 100, int(saved_r[1]) if len(saved_r) > 1 else 50, step=10)
+        r3 = st.number_input("比率3", 0, 100, int(saved_r[2]) if len(saved_r) > 2 else 50, step=10)
+        ratios = [r1, r2, r3]
+
+    elif layout in ["4コマ (上段３つ、下段１つ)", "4コマ (上段１つ、下段３つ)", "4コマ (左３つ、右１つ)", "4コマ (左１つ、右３つ)"]:
+        r1 = st.number_input("比率1", 0, 100, int(saved_r[0]) if len(saved_r) > 0 else 50, step=10)
+        r2 = st.number_input("比率2", 0, 100, int(saved_r[1]) if len(saved_r) > 1 else 33, step=10)
+        r3 = st.number_input("比率3", 0, 100, int(saved_r[2]) if len(saved_r) > 2 else 33, step=10)
+        ratios = [r1, r2, r3]
+        if r2 + r3 > 100: valid_state = False
+
+    elif layout in ["4コマ (上段２つ、中段１つ、下段１つ)", "4コマ (上段１つ、中段２つ、下段１つ)", "4コマ (上段１つ、中段１つ、下段２つ)"]:
+        r1 = st.number_input("比率1", 0, 100, int(saved_r[0]) if len(saved_r) > 0 else 33, step=10)
+        r2 = st.number_input("比率2", 0, 100, int(saved_r[1]) if len(saved_r) > 1 else 33, step=10)
+        r3 = st.number_input("比率3", 0, 100, int(saved_r[2]) if len(saved_r) > 2 else 50, step=10)
+        ratios = [r1, r2, r3]
+        if r1 + r2 > 100: valid_state = False
 
     if not valid_state:
         st.error("比率合計が100%超過")
