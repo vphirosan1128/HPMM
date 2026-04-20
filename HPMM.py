@@ -119,7 +119,14 @@ def create_manga_page(images, layout_type, canvas_w, canvas_h, bg_hex, lw, img_s
     elif layout_type == "2コマ (横並び)": boxes = [{"rect": (0, 0, r[0], 1), "edges": (1,1,1,0.5)}, {"rect": (r[0], 0, 1-r[0], 1), "edges": (1,0.5,1,1)}]
     elif layout_type == "3コマ (上段１つ、下段２つ)": boxes = [{"rect": (0, 0, 1, r[0]), "edges": (1,1,0.5,1)}, {"rect": (0, r[0], r[1], 1-r[0]), "edges": (0.5,1,1,0.5)}, {"rect": (r[1], r[0], 1-r[1], 1-r[0]), "edges": (0.5,0.5,1,1)}]
     elif layout_type == "3コマ (上段２つ、下段１つ)": boxes = [{"rect": (0, 0, r[1], r[0]), "edges": (1,1,0.5,0.5)}, {"rect": (r[1], 0, 1-r[1], r[0]), "edges": (1,0.5,0.5,1)}, {"rect": (0, r[0], 1, 1-r[0]), "edges": (0.5,1,1,1)}]
-    elif layout_type == "4コマ (田の字)": boxes = [{"rect": (0, 0, r[1], r[0]), "edges": (1,1,0.5,0.5)}, {"rect": (r[1], 0, 1-r[1], r[0]), "edges": (1,0.5,0.5,1)}, {"rect": (0, r[0], r[2], 1-r[0]), "edges": (0.5,1,1,0.5)}, {"rect": (r[2], r[0], 1-r[2], 1-r[0]), "edges": (0.5,0.5,1,1)}]
+    elif layout_type == "4コマ (田の字・横切優先)": boxes = [{"rect": (0, 0, r[1], r[0]), "edges": (1,1,0.5,0.5)}, {"rect": (r[1], 0, 1-r[1], r[0]), "edges": (1,0.5,0.5,1)}, {"rect": (0, r[0], r[2], 1-r[0]), "edges": (0.5,1,1,0.5)}, {"rect": (r[2], r[0], 1-r[2], 1-r[0]), "edges": (0.5,0.5,1,1)}]
+    
+    elif layout_type == "4コマ (田の字・縦切優先)":
+        boxes = [            {"rect": (0, 0, r[0], r[1]), "edges": (1,1,0.5,0.5)}, # 左上
+            {"rect": (0, r[1], r[0], 1-r[1]), "edges": (0.5,1,1,0.5)}, # 左下
+            {"rect": (r[0], 0, 1-r[0], r[2]), "edges": (1,0.5,0.5,1)}, # 右上
+            {"rect": (r[0], r[2], 1-r[0], 1-r[2]), "edges": (0.5,0.5,1,1)} # 右下
+        ]
 
     for i, b in enumerate(boxes):
         if i >= len(images): break
@@ -516,7 +523,7 @@ with st.sidebar:
     show_grid = st.checkbox("グリッドを表示", value=False)
     grid_size = st.number_input("グリッド間隔 (px)", 10, 500, 100, step=10) if show_grid else 100
 
-    layout_list = ["1コマ (全画面)", "2コマ (縦並び)", "3コマ (縦並び)", "4コマ (縦並び)", "2コマ (横並び)", "3コマ (上段１つ、下段２つ)", "3コマ (上段２つ、下段１つ)", "4コマ (田の字)"]
+    layout_list = ["1コマ (全画面)", "2コマ (縦並び)", "3コマ (縦並び)", "4コマ (縦並び)", "2コマ (横並び)", "3コマ (上段１つ、下段２つ)", "3コマ (上段２つ、下段１つ)", "4コマ (田の字・横切優先)","4コマ (田の字・縦切優先)"]
     saved_layout = conf.get("layout", {}).get("type", "1コマ (全画面)")
     layout = st.selectbox("レイアウト", layout_list, index=layout_list.index(saved_layout) if saved_layout in layout_list else 0)
 
@@ -529,10 +536,10 @@ with st.sidebar:
         r2 = st.number_input("比率2", 0, 100, int(saved_r[1]) if len(saved_r) > 1 else (33 if "縦" in layout else 50), step=10)
         ratios = [r1, r2]
         if r1 + r2 > 100 and "縦並び" in layout: valid_state = False
-    elif layout in ["4コマ (縦並び)", "4コマ (田の字)"]:
-        r1 = st.number_input("比率1", 0, 100, int(saved_r[0]) if len(saved_r) > 0 else (25 if "縦" in layout else 50), step=10)
-        r2 = st.number_input("比率2", 0, 100, int(saved_r[1]) if len(saved_r) > 1 else (25 if "縦" in layout else 50), step=10)
-        r3 = st.number_input("比率3", 0, 100, int(saved_r[2]) if len(saved_r) > 2 else (25 if "縦" in layout else 50), step=10)
+    elif layout in ["4コマ (縦並び)", "4コマ (田の字・横切優先)", "4コマ (田の字・縦切優先)"]:
+        r1 = st.number_input("比率1", 0, 100, int(saved_r[0]) if len(saved_r) > 0 else (25 if "縦並び" in layout else 50), step=10)
+        r2 = st.number_input("比率2", 0, 100, int(saved_r[1]) if len(saved_r) > 1 else (25 if "縦並び" in layout else 50), step=10)
+        r3 = st.number_input("比率3", 0, 100, int(saved_r[2]) if len(saved_r) > 2 else (25 if "縦並び" in layout else 50), step=10)
         ratios = [r1, r2, r3]
         if r1 + r2 + r3 > 100 and "縦並び" in layout: valid_state = False
     elif layout == "2コマ (横並び)":
@@ -746,5 +753,5 @@ if (st.session_state.cached_imgs and valid_state) or st.session_state.trigger_dr
     img_b64, svg_data = render_manga_preview(st.session_state.cached_imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, svg_settings, txt_settings, preview_zoom)
     with save_button_placeholder:
         save_js = generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h)
-        components.html(save_js, height=130)
+        components.html(save_js, height=120)
     st.session_state.trigger_draw = False
