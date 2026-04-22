@@ -17,7 +17,23 @@ st.set_page_config(page_title="HirosanP's Manga Maker", layout="wide", initial_s
 
 @st.cache_data
 def get_japanese_fonts():
-    standard_jp = ["MS Gothic", "MS Mincho", "Meiryo", "Yu Gothic", "Hiragino Kaku Gothic Pro", "IPAexGothic"]
+
+    # おすすめの Google Fonts をリストに追加
+    standard_jp = [
+        "MS Gothic", 
+        "MS Mincho", 
+        "Meiryo", 
+        "Yu Gothic", 
+        "IPAexGothic"        "Hiragino Kaku Gothic Pro", 
+        "Shippori Antic",   # セリフの定番（アンチック体）
+        "Zen Maru Gothic",  # 柔らかい表現（丸ゴシック）
+        "Shippori Mincho",  # ナレーション・回想（明朝体）
+        "Dela Gothic One",  # 叫び・強調（極太）
+        "Klee One",         # 手書き風（綺麗め）
+        "Yomogi",           # 手書き風（可愛い）
+        "Noto Sans JP",     # 標準的なゴシック
+    ]
+
     if HAS_MATPLOTLIB:
         flist = fm.findSystemFonts()
         names = set()
@@ -26,7 +42,8 @@ def get_japanese_fonts():
                 names.add(fm.FontProperties(fname=fname).get_name())
             except:
                 continue
-        return sorted(list(set(standard_jp) | names))
+        # 既存のシステムフォントと結合
+        return sorted(list(set(standard_jp) | names), key=lambda x: (x not in standard_jp, x))
     return standard_jp
 
 system_fonts = get_japanese_fonts()
@@ -51,6 +68,15 @@ if "cached_overlay" not in st.session_state:
 # --- CSSスタイル ---
 st.markdown("""
     <style>
+
+/* おすすめ Google Fonts の一括読み込み */
+    @import url('https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Klee+One&family=Noto+Sans+JP&family=Shippori+Antic&family=Shippori+Mincho&family=Yomogi&family=Zen+Maru+Gothic&display=swap');
+
+    /* アプリ全体のフォントをデフォルトで「しっぽりアンチック」に設定 */
+    html, body, [class*="css"], .stMarkdown {
+        font-family: 'Shippori Antic', 'Noto Sans JP', sans-serif;
+    }
+                        
     [data-testid="stHeader"], header, [data-testid="stToolbar"] { display: none !important; }
     [data-testid="stSidebarCollapseButton"] { display: none !important; }
     [data-testid="stSidebar"] { min-width: 350px !important; }
