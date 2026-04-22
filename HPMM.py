@@ -999,7 +999,7 @@ with st.sidebar:
     st.sidebar.markdown("""
     - [ReadMe](https://note.com/vphirosan1128/n/n2d18a4593f78)
     - [Web版](https://vphirosan1128-hpmm.streamlit.app/)
-    - [ローカル版配布サイト](https://bowlroll.net/file/351828)
+    - [ローカル版配布サイト](https://www.patreon.com/posts/man-hua-sheng-156257970)
     - [作者の販売作品(18禁)](https://www.patreon.com/posts/my-products-for-147807548)
     - [オノマトペ集(有料)](https://crimson-hard.booth.pm/items/8189955)
     """)
