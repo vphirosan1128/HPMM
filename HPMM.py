@@ -44,6 +44,10 @@ if "cached_imgs" not in st.session_state:
 if "cached_svg_raw" not in st.session_state:
     st.session_state.cached_svg_raw = []
 
+# ↓↓↓ ここを追加 ↓↓↓
+if "cached_overlay" not in st.session_state:
+    st.session_state.cached_overlay = None
+
 # --- CSSスタイル ---
 st.markdown("""
     <style>
@@ -225,8 +229,43 @@ def create_manga_page(images, layout_type, canvas_w, canvas_h, bg_hex, lw, img_s
         canvas.paste(panel, (int(canvas_w*rx + left), int(canvas_h*ry + t)))
     return canvas
 
-def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, svg_settings, txt_settings, preview_zoom):
+def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, svg_settings, txt_settings, preview_zoom, overlay_img=None, overlay_settings=None):
     base_img = create_manga_page(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios)
+
+    # --- ↓↓↓ ここから追加：オーバーレイ画像の合成 ↓↓↓ ---
+    if overlay_img and overlay_settings:
+        ov_img = overlay_img.copy().convert("RGBA")
+        
+        # 枠線（四角い外枠）の追加
+        bw = overlay_settings.get("border_w", 0)
+        bc = overlay_settings.get("border_c", "#FFFFFF")
+        if bw > 0:
+            new_w = ov_img.width + bw * 2
+            new_h = ov_img.height + bw * 2
+            border_img = Image.new("RGBA", (new_w, new_h), bc)
+            border_img.paste(ov_img, (bw, bw), ov_img)
+            ov_img = border_img
+
+        # リサイズ（倍率）
+        scale = overlay_settings.get("scale", 100) / 100.0
+        if scale != 1.0:
+            new_size = (int(ov_img.width * scale), int(ov_img.height * scale))
+            if new_size[0] > 0 and new_size[1] > 0:
+                ov_img = ov_img.resize(new_size, Image.LANCZOS)
+        
+        # 回転
+        rot = overlay_settings.get("rotate", 0)
+        if rot != 0:
+            ov_img = ov_img.rotate(rot, resample=Image.BICUBIC, expand=True)
+
+        # ペースト（配置）
+        x = overlay_settings.get("x", 0)
+        y = overlay_settings.get("y", 0)
+        base_img = base_img.convert("RGBA")
+        base_img.paste(ov_img, (x, y), ov_img)
+        base_img = base_img.convert("RGB")
+    # --- ↑↑↑ ここまで追加 ↑↑↑ ---
+
     buf = io.BytesIO()
     base_img.save(buf, format="PNG")
     img_b64 = base64.b64encode(buf.getvalue()).decode()
@@ -536,11 +575,26 @@ def sync_all_settings_to_state(num_txt_local, current_svg_order):
     st.session_state.config["texts"] = new_txts
     st.session_state.config["num_txt"] = num_txt_local
 
+    # ↓↓↓ ここから追加 ↓↓↓
+    if st.session_state.cached_overlay:
+        st.session_state.config["overlay"] = {
+            'scale': st.session_state.get("ov_scale", 100),
+            'rotate': st.session_state.get("ov_rotate", 0),
+            'x': st.session_state.get("ov_x", 0),
+            'y': st.session_state.get("ov_y", 0),
+            'border_w': st.session_state.get("ov_bw", 0),
+            'border_c': st.session_state.get("ov_bc", "#FFFFFF"),
+            'filename': getattr(st.session_state.cached_overlay, 'filename', 'overlay.png')
+        }
+    else:
+        st.session_state.config["overlay"] = {}
+
 # --- メインロジック ---
 
 img_settings = []
 svg_settings = []
 txt_settings = []
+overlay_settings = {}
 ratios = []
 valid_state = True
 
@@ -552,10 +606,16 @@ with st.sidebar:
         guide_text = "以下のファイルを手動で読み込んだ上で、設定を適用してください：<br>"
         for i, img_conf in enumerate(temp_config.get("images", [])):
             guide_text += f"・画像{i+1}: {img_conf.get('filename', '---')}<br>"
+
+        if "overlay" in temp_config and temp_config["overlay"]:
+            ov_name = temp_config["overlay"].get("filename", "---")
+            guide_text += f"・オーバーレイ: {ov_name}<br>"
+
         for i, svg_conf in enumerate(temp_config.get("svgs", [])):
             guide_text += f"・SVG{i+1}: {svg_conf.get('filename', '---')}<br>"
-        st.markdown(f'<div class="guide-box">{guide_text}</div>', unsafe_allow_html=True)
-        
+
+        st.markdown(f'<div class="guide-box" style="color: #FF8888; border: 1px solid red;">{guide_text}</div>', unsafe_allow_html=True)
+
         if st.button("設定を適用"):
             # 1. JSONの設定を、今あるエキスパンダーに上から順番に割り当てる
             json_svgs = temp_config.get("svgs", [])
@@ -579,6 +639,17 @@ with st.sidebar:
                 if 'y' in s_c: st.session_state[f"sy_{t_name}"] = int(s_c['y'])
                 if 'rotate' in s_c: st.session_state[f"svgr_{t_name}"] = int(s_c['rotate'])
                 if 'stroke_width' in s_c: st.session_state[f"swd_{t_name}"] = int(s_c['stroke_width']) # ←追加
+
+            # ↓↓↓ ここから追加 ↓↓↓
+            if "overlay" in temp_config and temp_config["overlay"]:
+                ov = temp_config["overlay"]
+                st.session_state["ov_scale"] = ov.get("scale", 100)
+                st.session_state["ov_rotate"] = ov.get("rotate", 0)
+                st.session_state["ov_x"] = ov.get("x", 0)
+                st.session_state["ov_y"] = ov.get("y", 0)
+                st.session_state["ov_bw"] = ov.get("border_w", 0)
+                st.session_state["ov_bc"] = ov.get("border_c", "#FFFFFF")
+            # ↑↑↑ ここまで追加 ↑↑↑
 
             # configを更新
             temp_config["svgs"] = json_svgs
@@ -706,6 +777,39 @@ with st.sidebar:
                 ox = st.number_input("左右", value=int(s_data.get('offset_x', 0)), step=10, key=f"x{i}")
                 oy = st.number_input("上下", value=int(s_data.get('offset_y', 0)), step=10, key=f"y{i}")
                 img_settings.append({'filename': fname, 'scale': sc, 'rotate': rot, 'offset_x': ox, 'offset_y': oy, 'flip_h': fh, 'flip_v': fv})
+
+
+    # === ↓↓↓ ここから追加：オーバーレイPNGのUI ↓↓↓ ===
+    # st.markdown('<p class="std-label">フリー配置PNG (SVG・文字の下)</p>', unsafe_allow_html=True)
+
+    up_overlay = st.file_uploader("オーバーレイ画像 (1枚のみ)", type=["png"])
+    
+    if up_overlay is not None:
+        img = Image.open(up_overlay).convert("RGBA")
+        img.filename = up_overlay.name
+        st.session_state.cached_overlay = img
+    else:
+        st.session_state.cached_overlay = None
+
+    if st.session_state.cached_overlay:
+        s_data = conf.get("overlay", {})
+        fname = getattr(st.session_state.cached_overlay, 'filename', '画像')
+        with st.expander(f"オーバーレイ設定: {fname}"):
+            col_o1, col_o2 = st.columns(2)
+            ov_sc = col_o1.number_input("倍率 (%)", 1, 1000, int(s_data.get('scale', 100)), step=10, key="ov_scale")
+            ov_rot = col_o2.number_input("回転", 0, 360, int(s_data.get('rotate', 0)), step=10, key="ov_rotate")
+            ov_x = st.number_input("X位置", -2000, 4000, int(s_data.get('x', 0)), step=10, key="ov_x")
+            ov_y = st.number_input("Y位置", -2000, 4000, int(s_data.get('y', 0)), step=10, key="ov_y")
+            
+            col_b1, col_b2 = st.columns(2)
+            ov_bw = col_b1.number_input("枠線太さ", 0, 200, int(s_data.get('border_w', 0)), step=1, key="ov_bw")
+            ov_bc = col_b2.text_input("枠線色", s_data.get('border_c', "#FFFFFF"), key="ov_bc")
+
+            overlay_settings = {
+                'scale': ov_sc, 'rotate': ov_rot, 'x': ov_x, 'y': ov_y, 
+                'border_w': ov_bw, 'border_c': ov_bc, 'filename': fname
+            }
+    # === ↑↑↑ ここまで追加 ↑↑↑ ===
 
     # SVGアップロード
     up_svgs = st.file_uploader("SVG (最大40個)", type=["svg"], accept_multiple_files=True)
@@ -858,7 +962,8 @@ with st.sidebar:
         "images": img_settings,
         "svgs": [{k: v for k, v in s.items() if k != 'content'} for s in svg_settings],
         "texts": txt_settings,
-        "num_txt": num_txt
+        "num_txt": num_txt,
+        "overlay": overlay_settings  # ← これを追加
     }
     st.download_button(label="設定ファイルを保存", data=json.dumps(export_data, indent=4, ensure_ascii=False), file_name="manga_config.json", mime="application/json", use_container_width=True)
 
@@ -875,7 +980,7 @@ with st.sidebar:
 
 # --- 描画処理 & 保存ボタン生成 ---
 if (st.session_state.cached_imgs and valid_state) or st.session_state.trigger_draw:
-    img_b64, svg_data = render_manga_preview(st.session_state.cached_imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, svg_settings, txt_settings, preview_zoom)
+    img_b64, svg_data = render_manga_preview(st.session_state.cached_imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, svg_settings, txt_settings, preview_zoom, st.session_state.cached_overlay, overlay_settings)
     with save_button_placeholder:
         save_js = generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h)
         components.html(save_js, height=120)
