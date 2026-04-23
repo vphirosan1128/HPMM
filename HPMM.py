@@ -389,7 +389,9 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
 
         content = re.sub(r'stroke-width="([\d\.]+)"', stroke_width_replacer, content, flags=re.IGNORECASE)
         content = re.sub(r'stroke-width:\s*([\d\.]+);?', stroke_style_replacer, content, flags=re.IGNORECASE)
-        
+
+        content = re.sub(r'stdDeviation="[\d\.]+"', f'stdDeviation="{s["stroke_blur"]}"', content, flags=re.IGNORECASE)
+
         # clean_svg = re.sub(r'\s(width|height)="[^"]*"', '', content)
         clean_svg = re.sub(r'(<svg[^>]*?)\s(?:width|height)="[^"]*"', r'\1', content, count=2, flags=re.IGNORECASE)
 
@@ -607,7 +609,8 @@ def sync_all_settings_to_state(num_txt_local, current_svg_order):
             'x': st.session_state.get(f"sx_{name}", 100),
             'y': st.session_state.get(f"sy_{name}", 100),
             'rotate': st.session_state.get(f"svgr_{name}", 0),
-            'stroke_width': st.session_state.get(f"swd_{name}", 2), # ←これを追加
+            'stroke_width': st.session_state.get(f"swd_{name}", 2),
+            'stroke_blur': st.session_state.get(f"sbd_{name}", 0.0),
         })
     st.session_state.config["svgs"] = new_svgs
     new_txts = []
@@ -696,7 +699,11 @@ with st.sidebar:
                 if 'x' in s_c: st.session_state[f"sx_{t_name}"] = int(s_c['x'])
                 if 'y' in s_c: st.session_state[f"sy_{t_name}"] = int(s_c['y'])
                 if 'rotate' in s_c: st.session_state[f"svgr_{t_name}"] = int(s_c['rotate'])
-                if 'stroke_width' in s_c: st.session_state[f"swd_{t_name}"] = int(s_c['stroke_width']) # ←追加
+                if 'stroke_width' in s_c: st.session_state[f"swd_{t_name}"] = int(s_c['stroke_width'])
+                if 'stroke_blur' in s_c: st.session_state[f"sbd_{t_name}"] = float(s_c['stroke_blur'])
+
+
+
 
             # ↓↓↓ ここから追加 ↓↓↓
             if "overlay" in temp_config and temp_config["overlay"]:
@@ -951,6 +958,7 @@ with st.sidebar:
             if f"sc_{target_name}" not in st.session_state: st.session_state[f"sc_{target_name}"] = s_data.get('stroke_color', "#000000")
             if f"sa_{target_name}" not in st.session_state: st.session_state[f"sa_{target_name}"] = float(s_data.get('stroke_alpha', 1.0))
             if f"swd_{target_name}" not in st.session_state: st.session_state[f"swd_{target_name}"] = int(s_data.get('stroke_width', 2))
+            if f"sbd_{target_name}" not in st.session_state: st.session_state[f"sbd_{target_name}"] = float(s_data.get('stroke_blur', 0.0))
             
             if f"sw_{target_name}" not in st.session_state: st.session_state[f"sw_{target_name}"] = int(s_data.get('w', default_w))
             if f"sh_{target_name}" not in st.session_state: st.session_state[f"sh_{target_name}"] = int(s_data.get('h', default_h))
@@ -967,6 +975,7 @@ with st.sidebar:
             s_color = col_c1.text_input("枠線色", key=f"sc_{target_name}")
             s_alpha = col_c2.number_input("枠線透過 (0-1.0)", min_value=0.0, max_value=1.0, step=0.1, key=f"sa_{target_name}")
             s_width = col_c1.number_input("枠線幅", min_value=0, max_value=500, step=1, key=f"swd_{target_name}")
+            s_blur = col_c2.number_input("枠線ぼかし", min_value=0.0, max_value=50.0, step=0.1, key=f"sbd_{target_name}")
 
             col1, col2 = st.columns(2)
             svg_w = col1.number_input("幅", min_value=10, max_value=4000, step=10, key=f"sw_{target_name}")
@@ -978,8 +987,21 @@ with st.sidebar:
             svg_rot = st.number_input("回転", min_value=0, max_value=360, step=10, key=f"svgr_{target_name}")
 
             svg_settings.append({
-                'filename': target_name, 'content': target_svg['content'], 'w': svg_w, 'h': svg_h, 'x': svg_x, 'y': svg_y, 
-                'rotate': svg_rot, 'flip_h': sfh, 'flip_v': sfv, 'color': f_color, 'fill_alpha': f_alpha, 'stroke_color': s_color, 'stroke_alpha': s_alpha, 'stroke_width': s_width
+                'filename': target_name, 
+                'content': target_svg['content'], 
+                'w': svg_w, 
+                'h': svg_h, 
+                'x': svg_x, 
+                'y': svg_y, 
+                'rotate': svg_rot, 
+                'flip_h': sfh, 
+                'flip_v': sfv, 
+                'color': f_color, 
+                'fill_alpha': f_alpha, 
+                'stroke_color': s_color, 
+                'stroke_alpha': s_alpha, 
+                'stroke_width': s_width, 
+                'stroke_blur': s_blur
             })
                         
     # テキスト設定
