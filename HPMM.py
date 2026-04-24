@@ -87,7 +87,7 @@ if "cached_overlay" not in st.session_state:
 st.markdown("""
     <style>
 
-/* おすすめ Google Fonts の一括読み込み */
+    /* おすすめ Google Fonts の一括読み込み */
     @import url('https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Klee+One&family=Noto+Sans+JP&family=Shippori+Antic&family=Shippori+Mincho&family=Yomogi&family=Zen+Maru+Gothic&display=swap');
 
     /* アプリ全体のフォントをデフォルトで「しっぽりアンチック」に設定 */
@@ -287,8 +287,7 @@ def create_manga_page(images, layout_type, canvas_w, canvas_h, bg_hex, lw, img_s
             {"rect": (r[1],     r[0]+(1-r[0])*r[2], 1-r[1],     (1-r[0])*(1-r[2])),     "edges": (0.5,1,0.5,1)}
         ]
 
-        # x, y, w, h 上左下右
-
+    # x, y, w, h 上左下右
     # --- ここまで追加 ---
 
     for i, b in enumerate(boxes):
@@ -1089,18 +1088,33 @@ with st.sidebar:
     }
     st.download_button(label="設定ファイルを保存", data=json.dumps(export_data, indent=4, ensure_ascii=False), file_name="manga_config.json", mime="application/json", use_container_width=True)
 
-    if st.button("すべての設定をリセット", use_container_width=True, type="secondary"):
-        # 現在のカウントを一時保存
-        current_count = st.session_state.reset_count
-        
-        # 完全に全ての設定とキャッシュを消去
-        st.session_state.clear()
-        
-        # カウントを1増やして復元（これで次回描画時にアップローダーが新品になる）
-        st.session_state.reset_count = current_count + 1
-        
-        # 画面を再描画
-        st.rerun()
+    with st.sidebar:
+        # st.divider()
+
+        # クリア確認状態の管理
+        if "confirm_clear" not in st.session_state:
+            st.session_state.confirm_clear = False
+
+        if not st.session_state.confirm_clear:
+            # 通常時のボタン
+            if st.button("設定をクリア", type="secondary", use_container_width=True):
+                st.session_state.confirm_clear = True
+                st.rerun()
+        else:
+            # 確認画面の表示
+            st.warning("すべての設定をクリアしますか？")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("はい", type="primary", use_container_width=True):
+                    current_count = st.session_state.reset_count
+                    st.session_state.clear()
+                    st.session_state.reset_count = current_count + 1
+                    st.session_state.confirm_clear = False # フラグを戻す
+                    st.rerun()
+            with col2:
+                if st.button("いいえ", type="secondary", use_container_width=True):
+                    st.session_state.confirm_clear = False
+                    st.rerun()
 
 with st.sidebar:
     st.divider()
