@@ -640,7 +640,7 @@ def sync_all_settings_to_state(num_txt_local, current_svg_order):
     for i in range(num_txt_local):
         new_txts.append({
             'text': st.session_state.get(f"tv{i}", ""),
-            'font': st.session_state.get(f"tf{i}", "MS Gothic"),
+            'font': st.session_state.get(f"tf{i}", "aqua_pfont"),
             'writing_mode': st.session_state.get(f"td{i}", "横書き"),
             'bold': st.session_state.get(f"tb{i}", False),
             'italic': st.session_state.get(f"ti{i}", False),
@@ -759,10 +759,10 @@ with st.sidebar:
 
     conf = st.session_state.config
     c_w = st.number_input("幅", value=int(conf.get("canvas", {}).get("w", 1080)), step=10)
-    c_h = st.number_input("高さ", value=int(conf.get("canvas", {}).get("h", 1920)), step=10)
+    c_h = st.number_input("高さ", value=int(conf.get("canvas", {}).get("h", 2160)), step=10)
     bg = st.text_input("背景色", conf.get("canvas", {}).get("bg", "#FFFFFF"))
     lw = st.number_input("枠線", value=int(conf.get("canvas", {}).get("lw", 10)), step=10)
-    preview_zoom = st.slider("プレビュー表示倍率 (%)", 5, 100, int(conf.get("preview_zoom", 30)), step=5)
+    preview_zoom = st.slider("プレビュー表示倍率 (%)", 5, 100, int(conf.get("preview_zoom", 60)), step=5)
 
     show_grid = st.checkbox("グリッドを表示", value=False)
     grid_size = st.number_input("グリッド間隔 (px)", 10, 500, 100, step=10) if show_grid else 100
@@ -1047,9 +1047,14 @@ with st.sidebar:
     for i in range(num_txt):
         s_data = saved_txts[i] if i < len(saved_txts) else {}
         with st.expander(f"テキスト{i+1}"):
-            t_val = st.text_area("内容", s_data.get('text', "入力"), key=f"tv{i}")
-            t_font = st.selectbox("フォント", system_fonts, index=system_fonts.index(s_data.get('font', "MS Gothic")) if s_data.get('font') in system_fonts else 0, key=f"tf{i}")
-            t_dir = st.radio("方向", ["横書き", "縦書き"], index=0 if s_data.get('writing_mode') == "横書き" else 1, horizontal=True, key=f"td{i}")
+            t_val = st.text_area("内容", s_data.get('text', ""), key=f"tv{i}")
+
+            default_font = "aqua_pfont"
+            current_f = s_data.get('font', default_font)
+            f_idx = system_fonts.index(current_f) if current_f in system_fonts else 0
+            t_font = st.selectbox("フォント", system_fonts, index=f_idx, key=f"tf{i}")
+
+            t_dir = st.radio("方向", ["横書き", "縦書き"], index=1 if s_data.get('writing_mode') == "縦書き" else 0, horizontal=True, key=f"td{i}")
             col_b, col_i = st.columns(2)
             tb = col_b.checkbox("太字", s_data.get('bold', False), key=f"tb{i}")
             ti = col_i.checkbox("斜体", s_data.get('italic', False), key=f"ti{i}")
@@ -1057,10 +1062,10 @@ with st.sidebar:
             tsx = st.number_input("横倍率 (%)", 10, 500, int(s_data.get('sx', 100)), step=10, key=f"tsx{i}")
             tlh = st.number_input("行間", 0.1, 10.0, float(s_data.get('line_height', 1.2)), step=0.1, key=f"tlh{i}")
             tls = st.number_input("文字間", -500, 500, int(s_data.get('letter_spacing', 0)), step=1, key=f"tls{i}")
-            ts = st.number_input("サイズ", 1, 2000, int(s_data.get('size', 60)), step=1, key=f"ts{i}")
+            ts = st.number_input("サイズ", 1, 2000, int(s_data.get('size', 30)), step=1, key=f"ts{i}")
             trt = st.number_input("回転", -360, 360, int(s_data.get('rotate', 0)), step=10, key=f"trt{i}")
-            tx = st.number_input("X位置", -2000, 5000, int(s_data.get('x', 150)), step=10, key=f"tx{i}")
-            ty = st.number_input("Y位置", -2000, 5000, int(s_data.get('y', 150)), step=10, key=f"ty{i}")
+            tx = st.number_input("X位置", -2000, 5000, int(s_data.get('x', 100)), step=10, key=f"tx{i}")
+            ty = st.number_input("Y位置", -2000, 5000, int(s_data.get('y', 100)), step=10, key=f"ty{i}")
             tc = st.text_input("文字色", s_data.get('color', "#000000"), key=f"tc{i}")
             oc = st.text_input("縁の色", s_data.get('outline_c', "#FFFFFF"), key=f"oc{i}")
             ow = st.number_input("縁太さ", 0, 200, int(s_data.get('outline_w', 4)), step=1, key=f"ow{i}")
