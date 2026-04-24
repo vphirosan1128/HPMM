@@ -1055,11 +1055,15 @@ with st.sidebar:
     st.divider()
     st.sidebar.caption("関連リンク")
     st.sidebar.markdown("""
-    - [ReadMe](https://note.com/vphirosan1128/n/n2d18a4593f78)
-    - [Web版](https://vphirosan1128-hpmm.streamlit.app/)
-    - [ローカル版配布サイト](https://www.patreon.com/posts/man-hua-sheng-156257970)
+    
     - [作者の販売作品(18禁)](https://www.patreon.com/posts/my-products-for-147807548)
     - [オノマトペ集(有料)](https://crimson-hard.booth.pm/items/8189955)
+    - [ReadMe](https://note.com/vphirosan1128/n/n2d18a4593f78)
+    - [SVGファイルの作り方](https://note.com/vphirosan1128/n/n8d81c08ed1d8)
+    - [解説動画1](https://www.youtube.com/watch?v=lWi3BRBLUvs)
+    - [解説動画2](https://www.youtube.com/watch?v=8_X5h49XGHw)
+    - [Web版](https://vphirosan1128-hpmm.streamlit.app/)
+    - [ローカル版配布サイト](https://www.patreon.com/posts/man-hua-sheng-156257970)
     """)
 
 # --- 描画処理 & 保存ボタン生成 ---
