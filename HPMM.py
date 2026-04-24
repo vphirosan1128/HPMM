@@ -51,6 +51,10 @@ system_fonts = get_japanese_fonts()
 # --- セッション状態の初期化 ---
 if "config" not in st.session_state:
     st.session_state.config = {}
+
+if "reset_count" not in st.session_state:
+    st.session_state.reset_count = 0
+
 if "trigger_draw" not in st.session_state:
     st.session_state.trigger_draw = False
 if "svg_order" not in st.session_state:
@@ -121,6 +125,12 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- 内部関数 ---
+def reset_all_settings():
+    """セッション状態を完全にクリアして初期状態に戻す"""
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    # ページをリロードして初期化を反映
+    # st.rerun()
 
 def get_svg_original_ratio(content):
     """SVGのコンテンツから元の縦横比(w, h)を推測する"""
@@ -661,7 +671,15 @@ valid_state = True
 
 with st.sidebar:
     # --- サイドバー設定項目 ---
-    conf_file = st.file_uploader("設定を読み込む", type=["json"])
+    # conf_file = st.file_uploader("設定を読み込む", type=["json"])
+
+    conf_file = st.file_uploader(
+        "設定を読み込む", 
+        type=["json"], 
+        key=f"json_uploader_{st.session_state.reset_count}"
+    )
+
+
     if conf_file:
         temp_config = json.load(conf_file)
         guide_text = "以下のファイルを手動で読み込んだ上で、設定を適用してください：<br>"
@@ -814,7 +832,10 @@ with st.sidebar:
         st.error("比率合計が100%超過")
 
     # 画像アップロード
-    up_imgs = st.file_uploader("画像 (最大4枚)", type=["jpg", "png"], accept_multiple_files=True)
+    #up_imgs = st.file_uploader("画像 (最大4枚)", type=["jpg", "png"], accept_multiple_files=True)
+    up_imgs = st.file_uploader("画像 (最大4枚)", type=["jpg", "png"], accept_multiple_files=True, key=f"up_imgs_{st.session_state.reset_count}")
+
+
     st.markdown('<p class="upload-caption">※ 5枚目以降の画像は無視されます</p>', unsafe_allow_html=True)
     
     # 画像キャッシュ更新
@@ -851,8 +872,9 @@ with st.sidebar:
     # === ↓↓↓ ここから追加：オーバーレイPNGのUI ↓↓↓ ===
     # st.markdown('<p class="std-label">フリー配置PNG (SVG・文字の下)</p>', unsafe_allow_html=True)
 
-    up_overlay = st.file_uploader("オーバーレイ画像 (1枚のみ)", type=["png"])
-    
+    # up_overlay = st.file_uploader("オーバーレイ画像 (1枚のみ)", type=["png"])
+    up_overlay = st.file_uploader("オーバーレイ画像 (1枚のみ)", type=["png"], key=f"up_overlay_{st.session_state.reset_count}")    
+
     if up_overlay is not None:
         img = Image.open(up_overlay).convert("RGBA")
         img.filename = up_overlay.name
@@ -881,7 +903,9 @@ with st.sidebar:
     # === ↑↑↑ ここまで追加 ↑↑↑ ===
 
     # SVGアップロード
-    up_svgs = st.file_uploader("SVG (最大40個)", type=["svg"], accept_multiple_files=True)
+    # up_svgs = st.file_uploader("SVG (最大40個)", type=["svg"], accept_multiple_files=True)
+    up_svgs = st.file_uploader("SVG (最大40個)", type=["svg"], accept_multiple_files=True, key=f"up_svgs_{st.session_state.reset_count}")    
+    
     st.markdown('<p class="upload-caption">※ 41個目以降のSVGは無視されます</p>', unsafe_allow_html=True)
     
     # SVGキャッシュ更新
@@ -1050,6 +1074,19 @@ with st.sidebar:
         "overlay": overlay_settings  # ← これを追加
     }
     st.download_button(label="設定ファイルを保存", data=json.dumps(export_data, indent=4, ensure_ascii=False), file_name="manga_config.json", mime="application/json", use_container_width=True)
+
+    if st.button("すべての設定をリセット", use_container_width=True, type="secondary"):
+        # 現在のカウントを一時保存
+        current_count = st.session_state.reset_count
+        
+        # 完全に全ての設定とキャッシュを消去
+        st.session_state.clear()
+        
+        # カウントを1増やして復元（これで次回描画時にアップローダーが新品になる）
+        st.session_state.reset_count = current_count + 1
+        
+        # 画面を再描画
+        st.rerun()
 
 with st.sidebar:
     st.divider()
