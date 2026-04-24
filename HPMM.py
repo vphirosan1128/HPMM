@@ -15,6 +15,20 @@ except ImportError:
 
 st.set_page_config(page_title="HirosanP's Manga Maker", layout="wide", initial_sidebar_state="expanded")
 
+# --- 追加：ブラウザ終了時の警告スクリプト ---
+components.html(
+    """
+    <script>
+    window.addEventListener('beforeunload', function (e) {
+        // 標準的なブラウザでは、確認ダイアログが表示されます
+        e.preventDefault();
+        e.returnValue = '';
+    });
+    </script>
+    """,
+    height=0,
+)
+
 @st.cache_data
 def get_japanese_fonts():
 
