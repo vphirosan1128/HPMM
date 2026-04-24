@@ -336,8 +336,8 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
             position: absolute; top: 0; left: 0; width: {c_w}px; height: {c_h}px;
             pointer-events: none;
             background-image: 
-                linear-gradient(to right, rgba(255, 75, 75, 0.3) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 75, 75, 0.3) 1px, transparent 1px);
+                linear-gradient(to right, rgba(255, 75, 75, 0.3) 3px, transparent 3px),
+                linear-gradient(to bottom, rgba(255, 75, 75, 0.3) 3px, transparent 3px);
             background-size: {grid_size}px {grid_size}px;
             z-index: 9999;
         "></div>
@@ -839,7 +839,7 @@ with st.sidebar:
             with st.expander(f"画像{i+1}調整: {fname}"):
                 col1, col2 = st.columns(2)
                 sc = col1.number_input("倍率 (%)", 10, 1000, int(s_data.get('scale', 100)), step=10, key=f"s{i}")
-                rot = col2.number_input("回転", 0, 360, int(s_data.get('rotate', 0)), step=10, key=f"r{i}")
+                rot = col2.number_input("回転", -360, 360, int(s_data.get('rotate', 0)), step=10, key=f"r{i}")
                 col_fh, col_fv = st.columns(2)
                 fh = col_fh.checkbox("横反転", s_data.get('flip_h', False), key=f"ifh{i}")
                 fv = col_fv.checkbox("縦反転", s_data.get('flip_v', False), key=f"ifv{i}")
@@ -866,7 +866,7 @@ with st.sidebar:
         with st.expander(f"オーバーレイ設定: {fname}"):
             col_o1, col_o2 = st.columns(2)
             ov_sc = col_o1.number_input("倍率 (%)", 1, 1000, int(s_data.get('scale', 100)), step=10, key="ov_scale")
-            ov_rot = col_o2.number_input("回転", 0, 360, int(s_data.get('rotate', 0)), step=10, key="ov_rotate")
+            ov_rot = col_o2.number_input("回転", -360, 360, int(s_data.get('rotate', 0)), step=10, key="ov_rotate")
             ov_x = st.number_input("X位置", -2000, 4000, int(s_data.get('x', 0)), step=10, key="ov_x")
             ov_y = st.number_input("Y位置", -2000, 4000, int(s_data.get('y', 0)), step=10, key="ov_y")
             
@@ -984,7 +984,7 @@ with st.sidebar:
             sfv = st.checkbox("縦反転", key=f"sfv_{target_name}")
             svg_x = st.number_input("X位置", min_value=-1000, max_value=4000, step=10, key=f"sx_{target_name}")
             svg_y = st.number_input("Y位置", min_value=-1000, max_value=4000, step=10, key=f"sy_{target_name}")
-            svg_rot = st.number_input("回転", min_value=0, max_value=360, step=10, key=f"svgr_{target_name}")
+            svg_rot = st.number_input("回転", min_value=-360, max_value=360, step=10, key=f"svgr_{target_name}")
 
             svg_settings.append({
                 'filename': target_name, 
@@ -1021,7 +1021,7 @@ with st.sidebar:
             tlh = st.number_input("行間", 0.1, 10.0, float(s_data.get('line_height', 1.2)), step=0.1, key=f"tlh{i}")
             tls = st.number_input("文字間", -500, 500, int(s_data.get('letter_spacing', 0)), step=1, key=f"tls{i}")
             ts = st.number_input("サイズ", 1, 2000, int(s_data.get('size', 60)), step=1, key=f"ts{i}")
-            trt = st.number_input("回転角", 0, 360, int(s_data.get('rotate', 0)), step=10, key=f"trt{i}")
+            trt = st.number_input("回転", -360, 360, int(s_data.get('rotate', 0)), step=10, key=f"trt{i}")
             tx = st.number_input("X位置", -2000, 5000, int(s_data.get('x', 150)), step=10, key=f"tx{i}")
             ty = st.number_input("Y位置", -2000, 5000, int(s_data.get('y', 150)), step=10, key=f"ty{i}")
             tc = st.text_input("文字色", s_data.get('color', "#000000"), key=f"tc{i}")
