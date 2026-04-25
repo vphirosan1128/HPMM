@@ -695,18 +695,6 @@ with st.sidebar:
 
     if conf_file:
         temp_config = json.load(conf_file)
-        guide_text = "以下のファイルを手動で読み込んだ上で、設定を適用してください：<br>"
-        for i, img_conf in enumerate(temp_config.get("images", [])):
-            guide_text += f"・画像{i+1}: {img_conf.get('filename', '---')}<br>"
-
-        if "overlay" in temp_config and temp_config["overlay"]:
-            ov_name = temp_config["overlay"].get("filename", "---")
-            guide_text += f"・オーバーレイ: {ov_name}<br>"
-
-        for i, svg_conf in enumerate(temp_config.get("svgs", [])):
-            guide_text += f"・SVG{i+1}: {svg_conf.get('filename', '---')}<br>"
-
-        st.markdown(f'<div class="guide-box" style="color: #FF8888; border: 1px solid red;">{guide_text}</div>', unsafe_allow_html=True)
 
         if st.button("設定を適用"):
             # 1. JSONの設定を、今あるエキスパンダーに上から順番に割り当てる
@@ -845,9 +833,13 @@ with st.sidebar:
         st.error("比率合計が100%超過")
 
     # 画像アップロード
-    #up_imgs = st.file_uploader("画像 (最大4枚)", type=["jpg", "png"], accept_multiple_files=True)
-    up_imgs = st.file_uploader("画像 (最大4枚)", type=["jpg", "png"], accept_multiple_files=True, key=f"up_imgs_{st.session_state.reset_count}")
+    if conf_file and 'temp_config' in locals():
+        img_names = [img.get('filename', '---') for img in temp_config.get("images", [])]
+        if img_names:
+            guide_imgs = "必要な画像：<br>" + "<br>".join([f"・画像{i+1}: {name}" for i, name in enumerate(img_names)])
+            st.markdown(f'<div class="guide-box" style="color: #FF8888; border: 1px solid red; margin-bottom: 5px;">{guide_imgs}</div>', unsafe_allow_html=True)
 
+    up_imgs = st.file_uploader("画像 (最大4枚)", type=["jpg", "png"], accept_multiple_files=True, key=f"up_imgs_{st.session_state.reset_count}")
 
     st.markdown('<p class="upload-caption">※ 5枚目以降の画像は無視されます</p>', unsafe_allow_html=True)
     
@@ -881,12 +873,13 @@ with st.sidebar:
                 oy = st.number_input("上下", value=int(s_data.get('offset_y', 0)), step=10, key=f"y{i}")
                 img_settings.append({'filename': fname, 'scale': sc, 'rotate': rot, 'offset_x': ox, 'offset_y': oy, 'flip_h': fh, 'flip_v': fv})
 
+    # オーバーレイ画像アップロード
+    if conf_file and 'temp_config' in locals():
+        if "overlay" in temp_config and temp_config["overlay"]:
+            ov_name = temp_config["overlay"].get("filename", "---")
+            st.markdown(f'<div class="guide-box" style="color: #FF8888; border: 1px solid red; margin-bottom: 5px;">必要なオーバーレイ：<br>・{ov_name}</div>', unsafe_allow_html=True)
 
-    # === ↓↓↓ ここから追加：オーバーレイPNGのUI ↓↓↓ ===
-    # st.markdown('<p class="std-label">フリー配置PNG (SVG・文字の下)</p>', unsafe_allow_html=True)
-
-    # up_overlay = st.file_uploader("オーバーレイ画像 (1枚のみ)", type=["png"])
-    up_overlay = st.file_uploader("オーバーレイ画像 (1枚のみ)", type=["png"], key=f"up_overlay_{st.session_state.reset_count}")    
+    up_overlay = st.file_uploader("オーバーレイ画像 (1枚のみ)", type=["png"], key=f"up_overlay_{st.session_state.reset_count}")
 
     if up_overlay is not None:
         img = Image.open(up_overlay).convert("RGBA")
@@ -913,10 +906,14 @@ with st.sidebar:
                 'scale': ov_sc, 'rotate': ov_rot, 'x': ov_x, 'y': ov_y, 
                 'border_w': ov_bw, 'border_c': ov_bc, 'filename': fname
             }
-    # === ↑↑↑ ここまで追加 ↑↑↑ ===
 
     # SVGアップロード
-    # up_svgs = st.file_uploader("SVG (最大40個)", type=["svg"], accept_multiple_files=True)
+    if conf_file and 'temp_config' in locals():
+        svg_names = [svg.get('filename', '---') for svg in temp_config.get("svgs", [])]
+        if svg_names:
+            guide_svgs = "必要なSVG：<br>" + "<br>".join([f"・SVG{i+1}: {name}" for i, name in enumerate(svg_names)])
+            st.markdown(f'<div class="guide-box" style="color: #FF8888; border: 1px solid red; margin-bottom: 5px;">{guide_svgs}</div>', unsafe_allow_html=True)
+
     up_svgs = st.file_uploader("SVG (最大40個)", type=["svg"], accept_multiple_files=True, key=f"up_svgs_{st.session_state.reset_count}")    
     
     st.markdown('<p class="upload-caption">※ 41個目以降のSVGは無視されます</p>', unsafe_allow_html=True)
