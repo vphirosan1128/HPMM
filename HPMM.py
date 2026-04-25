@@ -1052,31 +1052,84 @@ with st.sidebar:
 
     saved_txts = conf.get("texts", [])
     for i in range(num_txt):
+
         s_data = saved_txts[i] if i < len(saved_txts) else {}
+
+        # --- 全項目の初期化ロジック ---
+        # Session Stateにキーが存在しない（新規追加時）場合のみ、デフォルト値をセット
+        if f"tv{i}" not in st.session_state:
+            st.session_state[f"tv{i}"] = ""  # 内容
+        if f"tf{i}" not in st.session_state:
+            # aquapfontを優先、なければリストの先頭
+            st.session_state[f"tf{i}"] = "aqua_pfont" if "aqua_pfont" in system_fonts else system_fonts[0]
+        if f"td{i}" not in st.session_state:
+            st.session_state[f"td{i}"] = "横書き" # デフォルト方向
+        if f"tb{i}" not in st.session_state:
+            st.session_state[f"tb{i}"] = False  # 太字
+        if f"ti{i}" not in st.session_state:
+            st.session_state[f"ti{i}"] = False  # 斜体
+        if f"tsy{i}" not in st.session_state:
+            st.session_state[f"tsy{i}"] = 100   # 縦倍率
+        if f"tsx{i}" not in st.session_state:
+            st.session_state[f"tsx{i}"] = 100   # 横倍率
+        if f"tlh{i}" not in st.session_state:
+            st.session_state[f"tlh{i}"] = 1.0   # 行間
+        if f"tls{i}" not in st.session_state:
+            st.session_state[f"tls{i}"] = 0     # 文字間
+        if f"ts{i}" not in st.session_state:
+            st.session_state[f"ts{i}"] = 40    # サイズ
+        if f"trt{i}" not in st.session_state:
+            st.session_state[f"trt{i}"] = 0     # 回転
+        if f"tx{i}" not in st.session_state:
+            st.session_state[f"tx{i}"] = 100    # X位置
+        if f"ty{i}" not in st.session_state:
+            st.session_state[f"ty{i}"] = 100    # Y位置
+        if f"tc{i}" not in st.session_state:
+            st.session_state[f"tc{i}"] = "#000000" # 文字色(黒)
+        if f"oc{i}" not in st.session_state:
+            st.session_state[f"oc{i}"] = "#FFFFFF" # 縁の色(白)
+        if f"ow{i}" not in st.session_state:
+            st.session_state[f"ow{i}"] = 0      # 縁太さ
+        # -----------------------------
+
         with st.expander(f"テキスト{i+1}"):
-            t_val = st.text_area("内容", s_data.get('text', ""), key=f"tv{i}")
 
-            default_font = "aqua_pfont"
-            current_f = s_data.get('font', default_font)
-            f_idx = system_fonts.index(current_f) if current_f in system_fonts else 0
-            t_font = st.selectbox("フォント", system_fonts, index=f_idx, key=f"tf{i}")
-
-            t_dir = st.radio("方向", ["横書き", "縦書き"], index=1 if s_data.get('writing_mode') == "縦書き" else 0, horizontal=True, key=f"td{i}")
+            t_val = st.text_area("内容", key=f"tv{i}", height=100)
+            t_font = st.selectbox("フォント", system_fonts, key=f"tf{i}")
+            t_dir = st.radio("方向", ["横書き", "縦書き"], horizontal=True, key=f"td{i}")
             col_b, col_i = st.columns(2)
-            tb = col_b.checkbox("太字", s_data.get('bold', False), key=f"tb{i}")
-            ti = col_i.checkbox("斜体", s_data.get('italic', False), key=f"ti{i}")
-            tsy = st.number_input("縦倍率 (%)", 10, 500, int(s_data.get('sy', 100)), step=10, key=f"tsy{i}")
-            tsx = st.number_input("横倍率 (%)", 10, 500, int(s_data.get('sx', 100)), step=10, key=f"tsx{i}")
-            tlh = st.number_input("行間", 0.1, 10.0, float(s_data.get('line_height', 1.0)), step=0.1, key=f"tlh{i}")
-            tls = st.number_input("文字間", -500, 500, int(s_data.get('letter_spacing', 0)), step=1, key=f"tls{i}")
-            ts = st.number_input("サイズ", 1, 2000, int(s_data.get('size', 30)), step=1, key=f"ts{i}")
-            trt = st.number_input("回転", -360, 360, int(s_data.get('rotate', 0)), step=10, key=f"trt{i}")
-            tx = st.number_input("X位置", -2000, 5000, int(s_data.get('x', 100)), step=10, key=f"tx{i}")
-            ty = st.number_input("Y位置", -2000, 5000, int(s_data.get('y', 100)), step=10, key=f"ty{i}")
-            tc = st.text_input("文字色", s_data.get('color', "#000000"), key=f"tc{i}")
-            oc = st.text_input("縁の色", s_data.get('outline_c', "#FFFFFF"), key=f"oc{i}")
-            ow = st.number_input("縁太さ", 0, 200, int(s_data.get('outline_w', 4)), step=1, key=f"ow{i}")
-            txt_settings.append({'text': t_val, 'font': t_font, 'size': ts, 'color': tc, 'x': tx, 'y': ty, 'outline_w': ow, 'outline_c': oc, 'rotate': trt, 'writing_mode': t_dir, 'sx': tsx, 'sy': tsy, 'bold': tb, 'italic': ti, 'line_height': tlh, 'letter_spacing': tls})
+            tb = col_b.checkbox("太字", key=f"tb{i}")
+            ti = col_i.checkbox("斜体", key=f"ti{i}")
+            tsy = st.number_input("縦倍率 (%)", 10, 500, step=10, key=f"tsy{i}")
+            tsx = st.number_input("横倍率 (%)", 10, 500, step=10, key=f"tsx{i}")
+            tlh = st.number_input("行間", 0.1, 10.0, step=0.1, key=f"tlh{i}")
+            tls = st.number_input("文字間", -500, 500, step=1, key=f"tls{i}")
+            ts = st.number_input("サイズ", 1, 2000, step=1, key=f"ts{i}")
+            trt = st.number_input("回転", -360, 360, step=10, key=f"trt{i}")
+            tx = st.number_input("X位置", -2000, 5000, step=10, key=f"tx{i}")
+            ty = st.number_input("Y位置", -2000, 5000, step=10, key=f"ty{i}")
+            tc = st.text_input("文字色", key=f"tc{i}")
+            oc = st.text_input("縁の色", key=f"oc{i}")
+            ow = st.number_input("縁太さ", 0, 200, step=1, key=f"ow{i}")
+
+            txt_settings.append({
+                'text': t_val, 
+                'font': t_font, 
+                'size': ts, 
+                'color': tc, 
+                'x': tx, 
+                'y': ty, 
+                'outline_w': ow, 
+                'outline_c': oc, 
+                'rotate': trt, 
+                'writing_mode': t_dir, 
+                'sx': tsx, 
+                'sy': tsy, 
+                'bold': tb, 
+                'italic': ti, 
+                'line_height': tlh, 
+                'letter_spacing': tls
+            })
 
     # --- 操作・書き出しパネル (サイドバー下部に移動) ---
     st.divider()
