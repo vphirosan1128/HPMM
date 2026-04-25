@@ -15,7 +15,7 @@ except ImportError:
 
 st.set_page_config(page_title="HirosanP's Manga Maker", layout="wide", initial_sidebar_state="expanded")
 
-# --- 追加：ブラウザ終了時の警告スクリプト ---
+# --- ブラウザ終了時の警告スクリプト ---
 components.html(
     """
     <script>
@@ -79,7 +79,6 @@ if "cached_imgs" not in st.session_state:
 if "cached_svg_raw" not in st.session_state:
     st.session_state.cached_svg_raw = []
 
-# ↓↓↓ ここを追加 ↓↓↓
 if "cached_overlay" not in st.session_state:
     st.session_state.cached_overlay = None
 
@@ -143,8 +142,6 @@ def reset_all_settings():
     """セッション状態を完全にクリアして初期状態に戻す"""
     for key in list(st.session_state.keys()):
         del st.session_state[key]
-    # ページをリロードして初期化を反映
-    # st.rerun()
 
 def get_svg_original_ratio(content):
     """SVGのコンテンツから元の縦横比(w, h)を推測する"""
@@ -175,7 +172,7 @@ def create_manga_page(images, layout_type, canvas_w, canvas_h, bg_hex, lw, img_s
     elif layout_type == "3コマ (上段２つ、下段１つ)": boxes = [{"rect": (0, 0, r[1], r[0]), "edges": (1,1,0.5,0.5)}, {"rect": (r[1], 0, 1-r[1], r[0]), "edges": (1,0.5,0.5,1)}, {"rect": (0, r[0], 1, 1-r[0]), "edges": (0.5,1,1,1)}]
     elif layout_type == "4コマ (田の字・横切優先)": boxes = [{"rect": (0, 0, r[1], r[0]), "edges": (1,1,0.5,0.5)}, {"rect": (r[1], 0, 1-r[1], r[0]), "edges": (1,0.5,0.5,1)}, {"rect": (0, r[0], r[2], 1-r[0]), "edges": (0.5,1,1,0.5)}, {"rect": (r[2], r[0], 1-r[2], 1-r[0]), "edges": (0.5,0.5,1,1)}]
 
-    # --- ここから追加 ---
+    # --- 追加分 ---
     elif layout_type == "4コマ (田の字・縦切優先)":
         boxes = [            {"rect": (0, 0, r[0], r[1]), "edges": (1,1,0.5,0.5)}, # 左上
             {"rect": (0, r[1], r[0], 1-r[1]), "edges": (0.5,1,1,0.5)}, # 左下
@@ -184,7 +181,6 @@ def create_manga_page(images, layout_type, canvas_w, canvas_h, bg_hex, lw, img_s
         ]
 
     elif layout_type == "3コマ (左１つ、右２つ)":
-        # r[0]が左右を分ける縦線、r[1]が右側を上下に分ける横線の位置
         boxes = [
             {"rect": (0, 0, r[0], 1), "edges": (1,1,1,0.5)},        # 左（縦長）
             {"rect": (r[0], 0, 1-r[0], r[1]), "edges": (1,0.5,0.5,1)}, # 右上
@@ -192,7 +188,6 @@ def create_manga_page(images, layout_type, canvas_w, canvas_h, bg_hex, lw, img_s
         ]
 
     elif layout_type == "3コマ (左２つ、右１つ)":
-        # r[0]が左右を分ける縦線、r[1]が左側を上下に分ける横線の位置
         boxes = [
             {"rect": (0, 0, r[0], r[1]), "edges": (1,1,0.5,0.5)},   # 左上
             {"rect": (0, r[1], r[0], 1-r[1]), "edges": (0.5,1,1,0.5)}, # 左下
@@ -200,7 +195,6 @@ def create_manga_page(images, layout_type, canvas_w, canvas_h, bg_hex, lw, img_s
         ]
 
     elif layout_type == "4コマ (上段３つ、下段１つ)":
-        # r[1], r[2] は 0〜100 の位置座標（左からの距離）
         boxes = [
             {"rect": (0, 0, r[1], r[0]), "edges": (1,1,0.5,0.5)}, 
             {"rect": (r[1], 0, r[2], r[0]), "edges": (1,0.5,0.5,0.5)},
@@ -288,7 +282,7 @@ def create_manga_page(images, layout_type, canvas_w, canvas_h, bg_hex, lw, img_s
         ]
 
     # x, y, w, h 上左下右
-    # --- ここまで追加 ---
+    # --- ここまで追加分 ---
 
     for i, b in enumerate(boxes):
         if i >= len(images): break
@@ -313,7 +307,6 @@ def create_manga_page(images, layout_type, canvas_w, canvas_h, bg_hex, lw, img_s
 def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, svg_settings, txt_settings, preview_zoom, overlay_img=None, overlay_settings=None):
     base_img = create_manga_page(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios)
 
-    # --- ↓↓↓ ここから追加：オーバーレイ画像の合成 ↓↓↓ ---
     if overlay_img and overlay_settings:
         ov_img = overlay_img.copy().convert("RGBA")
         
@@ -345,7 +338,6 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
         base_img = base_img.convert("RGBA")
         base_img.paste(ov_img, (x, y), ov_img)
         base_img = base_img.convert("RGB")
-    # --- ↑↑↑ ここまで追加 ↑↑↑ ---
 
     buf = io.BytesIO()
     base_img.save(buf, format="PNG")
@@ -415,7 +407,6 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
 
         content = re.sub(r'stdDeviation="[\d\.]+"', f'stdDeviation="{s["stroke_blur"]}"', content, flags=re.IGNORECASE)
 
-        # clean_svg = re.sub(r'\s(width|height)="[^"]*"', '', content)
         clean_svg = re.sub(r'(<svg[^>]*?)\s(?:width|height)="[^"]*"', r'\1', content, count=2, flags=re.IGNORECASE)
 
         if '<svg' in clean_svg and 'preserveAspectRatio' not in clean_svg:
@@ -683,6 +674,7 @@ ratios = []
 valid_state = True
 
 with st.sidebar:
+
     # --- サイドバー設定項目 ---
 
     conf_file = st.file_uploader(
@@ -750,10 +742,6 @@ with st.sidebar:
                 if "color" in txt_conf: st.session_state[f"tc{i}"] = txt_conf["color"]
                 if "outline_c" in txt_conf: st.session_state[f"oc{i}"] = txt_conf["outline_c"]
                 if "outline_w" in txt_conf: st.session_state[f"ow{i}"] = int(txt_conf["outline_w"])
-            # --- 追加ここまで ---
-
-
-
 
             # configを更新
             temp_config["svgs"] = json_svgs
@@ -936,7 +924,6 @@ with st.sidebar:
     st.markdown('<p class="upload-caption">※ 41個目以降のSVGは無視されます</p>', unsafe_allow_html=True)
     
     # SVGキャッシュ更新
-    # if up_svgs:
     if up_svgs is not None: # 空リストの場合でも中に入るようにする
 
         if len(up_svgs) == 0:
@@ -1093,7 +1080,6 @@ with st.sidebar:
 
     # --- 操作・書き出しパネル (サイドバー下部に移動) ---
     st.divider()
-    #st.markdown('<p class="std-label">操作・書き出し</p>', unsafe_allow_html=True)
     
     if st.button("画像を再描画", use_container_width=True):
         st.session_state.trigger_draw = True
@@ -1114,7 +1100,6 @@ with st.sidebar:
     st.download_button(label="設定ファイルを保存", data=json.dumps(export_data, indent=4, ensure_ascii=False), file_name="manga_config.json", mime="application/json", use_container_width=True)
 
     with st.sidebar:
-        # st.divider()
 
         # クリア確認状態の管理
         if "confirm_clear" not in st.session_state:
