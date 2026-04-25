@@ -1042,7 +1042,9 @@ with st.sidebar:
             })
                         
     # テキスト設定
-    num_txt = st.number_input("テキスト数 (最大40個)", 0, 40, num_txt_val)
+    # num_txt = st.number_input("テキスト数 (最大40個)", 0, 40, num_txt_val)
+    num_txt = st.number_input("テキスト数 (最大40個)", 0, 40, num_txt_val, key=f"num_txt_{st.session_state.reset_count}")
+
     saved_txts = conf.get("texts", [])
     for i in range(num_txt):
         s_data = saved_txts[i] if i < len(saved_txts) else {}
@@ -1060,7 +1062,7 @@ with st.sidebar:
             ti = col_i.checkbox("斜体", s_data.get('italic', False), key=f"ti{i}")
             tsy = st.number_input("縦倍率 (%)", 10, 500, int(s_data.get('sy', 100)), step=10, key=f"tsy{i}")
             tsx = st.number_input("横倍率 (%)", 10, 500, int(s_data.get('sx', 100)), step=10, key=f"tsx{i}")
-            tlh = st.number_input("行間", 0.1, 10.0, float(s_data.get('line_height', 1.2)), step=0.1, key=f"tlh{i}")
+            tlh = st.number_input("行間", 0.1, 10.0, float(s_data.get('line_height', 1.0)), step=0.1, key=f"tlh{i}")
             tls = st.number_input("文字間", -500, 500, int(s_data.get('letter_spacing', 0)), step=1, key=f"tls{i}")
             ts = st.number_input("サイズ", 1, 2000, int(s_data.get('size', 30)), step=1, key=f"ts{i}")
             trt = st.number_input("回転", -360, 360, int(s_data.get('rotate', 0)), step=10, key=f"trt{i}")
