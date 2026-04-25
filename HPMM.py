@@ -684,14 +684,12 @@ valid_state = True
 
 with st.sidebar:
     # --- サイドバー設定項目 ---
-    # conf_file = st.file_uploader("設定を読み込む", type=["json"])
 
     conf_file = st.file_uploader(
         "設定を読み込む", 
         type=["json"], 
         key=f"json_uploader_{st.session_state.reset_count}"
     )
-
 
     if conf_file:
         temp_config = json.load(conf_file)
@@ -721,10 +719,6 @@ with st.sidebar:
                 if 'stroke_width' in s_c: st.session_state[f"swd_{t_name}"] = int(s_c['stroke_width'])
                 if 'stroke_blur' in s_c: st.session_state[f"sbd_{t_name}"] = float(s_c['stroke_blur'])
 
-
-
-
-            # ↓↓↓ ここから追加 ↓↓↓
             if "overlay" in temp_config and temp_config["overlay"]:
                 ov = temp_config["overlay"]
                 st.session_state["ov_scale"] = ov.get("scale", 100)
@@ -733,7 +727,33 @@ with st.sidebar:
                 st.session_state["ov_y"] = ov.get("y", 0)
                 st.session_state["ov_bw"] = ov.get("border_w", 0)
                 st.session_state["ov_bc"] = ov.get("border_c", "#FFFFFF")
-            # ↑↑↑ ここまで追加 ↑↑↑
+
+            # 1. テキスト数を反映
+            t_count = int(temp_config.get("num_txt", 0))
+            st.session_state[f"num_txt_{st.session_state.reset_count}"] = t_count
+
+            # 2. 各テキストの内容・フォント・座標なども一気に反映（これをしないと枠が出ても中身が空になります）
+            for i, txt_conf in enumerate(temp_config.get("texts", [])):
+                if "text" in txt_conf: st.session_state[f"tv{i}"] = txt_conf["text"]
+                if "font" in txt_conf: st.session_state[f"tf{i}"] = txt_conf["font"]
+                if "writing_mode" in txt_conf: st.session_state[f"td{i}"] = txt_conf["writing_mode"]
+                if "bold" in txt_conf: st.session_state[f"tb{i}"] = txt_conf["bold"]
+                if "italic" in txt_conf: st.session_state[f"ti{i}"] = txt_conf["italic"]
+                if "sy" in txt_conf: st.session_state[f"tsy{i}"] = int(txt_conf["sy"])
+                if "sx" in txt_conf: st.session_state[f"tsx{i}"] = int(txt_conf["sx"])
+                if "line_height" in txt_conf: st.session_state[f"tlh{i}"] = float(txt_conf["line_height"])
+                if "letter_spacing" in txt_conf: st.session_state[f"tls{i}"] = int(txt_conf["letter_spacing"])
+                if "size" in txt_conf: st.session_state[f"ts{i}"] = int(txt_conf["size"])
+                if "rotate" in txt_conf: st.session_state[f"trt{i}"] = int(txt_conf["rotate"])
+                if "x" in txt_conf: st.session_state[f"tx{i}"] = int(txt_conf["x"])
+                if "y" in txt_conf: st.session_state[f"ty{i}"] = int(txt_conf["y"])
+                if "color" in txt_conf: st.session_state[f"tc{i}"] = txt_conf["color"]
+                if "outline_c" in txt_conf: st.session_state[f"oc{i}"] = txt_conf["outline_c"]
+                if "outline_w" in txt_conf: st.session_state[f"ow{i}"] = int(txt_conf["outline_w"])
+            # --- 追加ここまで ---
+
+
+
 
             # configを更新
             temp_config["svgs"] = json_svgs
@@ -742,9 +762,6 @@ with st.sidebar:
             # 再描画ボタンと同じフラグを立てる
             st.session_state.trigger_draw = True
             
-            # ★最大の原因だった st.rerun() を削除！
-            # これにより処理が途切れず下に流れ、再描画ボタンを押した時と全く同じ動作になります
-
     conf = st.session_state.config
     c_w = st.number_input("幅", value=int(conf.get("canvas", {}).get("w", 1080)), step=10)
     c_h = st.number_input("高さ", value=int(conf.get("canvas", {}).get("h", 2160)), step=10)
@@ -752,7 +769,7 @@ with st.sidebar:
     lw = st.number_input("枠線", value=int(conf.get("canvas", {}).get("lw", 10)), step=10)
     preview_zoom = st.slider("プレビュー表示倍率 (%)", 5, 100, int(conf.get("preview_zoom", 60)), step=5)
 
-    show_grid = st.checkbox("グリッドを表示", value=False)
+    show_grid = st.checkbox("グリッドを表示", value=True)
     grid_size = st.number_input("グリッド間隔 (px)", 10, 500, 100, step=10) if show_grid else 100
 
     layout_list = [
@@ -1039,8 +1056,12 @@ with st.sidebar:
             })
                         
     # テキスト設定
-    # num_txt = st.number_input("テキスト数 (最大40個)", 0, 40, num_txt_val)
-    num_txt = st.number_input("テキスト数 (最大40個)", 0, 40, num_txt_val, key=f"num_txt_{st.session_state.reset_count}")
+    num_txt = st.number_input(
+        "テキスト数 (最大40個)", 
+        min_value=0, 
+        max_value=40, 
+        key=f"num_txt_{st.session_state.reset_count}"
+    )
 
     saved_txts = conf.get("texts", [])
     for i in range(num_txt):
