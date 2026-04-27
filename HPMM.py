@@ -62,6 +62,32 @@ def get_japanese_fonts():
 
 system_fonts = get_japanese_fonts()
 
+def to_vertical_text(text):
+    if not text:
+        return ""
+    # 縦書きで横を向いてしまう記号を、縦書き用コードに置換
+    vertical_map = {
+        "ー": "\ue002",
+        "～": "\ue003",
+        "…":  "\ue004",
+        "＝": "\ue005",
+        "、": "\ue006",
+        "。": "\ue007",
+        "（": "\ue008",
+        "）": "\ue009",
+        "「": "\ue00a",
+        "」": "\ue00b",
+        "『": "\ue00c",
+        "』": "\ue00d",
+        "【": "\ue00e",
+        "】": "\ue00f" 
+    }
+    
+    for key, val in vertical_map.items():
+        text = text.replace(key, val)
+    return text
+
+
 # --- セッション状態の初期化 ---
 if "config" not in st.session_state:
     st.session_state.config = {}
@@ -422,6 +448,14 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
 
     txt_html = ""
     for t in txt_settings:
+
+        # 1. 表示用のテキストを準備（元のデータ t["text"] は壊さない）
+        display_text = t["text"]
+
+        # 2. 縦書き設定の場合のみ、この場限りの変換をかける
+        if t.get("writing_mode") == "縦書き":
+            display_text = to_vertical_text(t["text"])
+
         stroke_style = f'-webkit-text-stroke: {t["outline_w"]}px {t["outline_c"]};' if t["outline_w"] > 0 else ""
         writing_mode_style = "writing-mode: vertical-rl;" if t["writing_mode"] == "縦書き" else ""
         bold_style = "font-weight: bold;" if t["bold"] else "font-weight: normal;"
@@ -430,7 +464,8 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
         actual_sx = t['sx'] / 100.0
         actual_sy = t['sy'] / 100.0
         rotate_transform = f'transform: rotate({t["rotate"]}deg) scale({actual_sx}, {actual_sy}); transform-origin: top left;'
-        txt_html += f'<div class="text-overlay" style="left:{t["x"]}px; top:{t["y"]}px; color:{t["color"]}; font-size:{t["size"]}px; font-family:\'{t["font"]}\', sans-serif; white-space:pre; {stroke_style} {rotate_transform} {writing_mode_style} {bold_style} {italic_style} {spacing_style}">{t["text"]}</div>'
+        # txt_html += f'<div class="text-overlay" style="left:{t["x"]}px; top:{t["y"]}px; color:{t["color"]}; font-size:{t["size"]}px; font-family:\'{t["font"]}\', sans-serif; white-space:pre; {stroke_style} {rotate_transform} {writing_mode_style} {bold_style} {italic_style} {spacing_style}">{t["text"]}</div>'
+        txt_html += f'<div class="text-overlay" style="left:{t["x"]}px; top:{t["y"]}px; color:{t["color"]}; font-size:{t["size"]}px; font-family:\'{t["font"]}\', sans-serif; white-space:pre; {stroke_style} {rotate_transform} {writing_mode_style} {bold_style} {italic_style} {spacing_style}">{display_text}</div>'
 
     zoom_val = preview_zoom / 100.0
     st.markdown(f"""
@@ -444,6 +479,15 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
     return img_b64, svg_data
 
 def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
+
+    display_txt_settings = []
+    for t in txt_settings:
+        item = t.copy() # 元のデータを壊さないようにコピー
+        if item.get('writing_mode') == "縦書き":
+            # ここで Python の to_vertical_text を呼び出す
+            item['text'] = to_vertical_text(item['text'])
+        display_txt_settings.append(item)
+
     js = f"""
     <body style="margin:0; background:transparent; display: flex; flex-direction: column; height: 100px; gap: 10px;">        
         <button id="btn_normal" style="
@@ -512,7 +556,7 @@ def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
                         ctx.restore();
                     }}
                                         
-                    const txts = {json.dumps(txt_settings)};
+                    const txts = {json.dumps(display_txt_settings)};
                     txts.forEach(t => {{
                         if (!t.text) return;
                         ctx.save();
@@ -1077,7 +1121,7 @@ with st.sidebar:
         if f"tls{i}" not in st.session_state:
             st.session_state[f"tls{i}"] = 0     # 文字間
         if f"ts{i}" not in st.session_state:
-            st.session_state[f"ts{i}"] = 40    # サイズ
+            st.session_state[f"ts{i}"] = 30     # サイズ
         if f"trt{i}" not in st.session_state:
             st.session_state[f"trt{i}"] = 0     # 回転
         if f"tx{i}" not in st.session_state:
