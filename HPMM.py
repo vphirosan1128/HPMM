@@ -993,23 +993,26 @@ with st.sidebar:
 
     if raw_svg_list:
         st.markdown('<p class="std-label">SVG重なり順 (下ほど前面)</p>', unsafe_allow_html=True)
+        
+        # --- 追加: コールバック関数の定義 ---
+        def swap_svg(idx, direction):
+            # 常に画面上の最新のテキスト数を取得して退避
+            live_num_txt = st.session_state.get(f"num_txt_{st.session_state.reset_count}", int(conf.get("num_txt", 0)))
+            sync_all_settings_to_state(live_num_txt, st.session_state.svg_order)
+            
+            if direction == "up" and idx > 0:
+                st.session_state.svg_order[idx], st.session_state.svg_order[idx-1] = st.session_state.svg_order[idx-1], st.session_state.svg_order[idx]
+            elif direction == "down" and idx < len(st.session_state.svg_order)-1:
+                st.session_state.svg_order[idx], st.session_state.svg_order[idx+1] = st.session_state.svg_order[idx+1], st.session_state.svg_order[idx]
+            
+            st.session_state.trigger_draw = True    
+        
         for idx, name in enumerate(st.session_state.svg_order):
             c_btn1, c_btn2, c_txt = st.columns([1, 1, 5])
-            if c_btn1.button("↑", key=f"svg_up_{idx}") and idx > 0:
-
-                sync_all_settings_to_state(num_txt_val, st.session_state.svg_order)
-                
-                st.session_state.svg_order[idx], st.session_state.svg_order[idx-1] = st.session_state.svg_order[idx-1], st.session_state.svg_order[idx]
-                st.session_state.trigger_draw = True
-                st.rerun()
-            
-            if c_btn2.button("↓", key=f"svg_down_{idx}") and idx < len(st.session_state.svg_order)-1:
-                
-                sync_all_settings_to_state(num_txt_val, st.session_state.svg_order)
-
-                st.session_state.svg_order[idx], st.session_state.svg_order[idx+1] = st.session_state.svg_order[idx+1], st.session_state.svg_order[idx]
-                st.session_state.trigger_draw = True
-                st.rerun()
+ 
+            # 変更: st.rerun() をやめ、on_click で状態を更新する
+            c_btn1.button("↑", key=f"svg_up_{idx}", on_click=swap_svg, args=(idx, "up"))
+            c_btn2.button("↓", key=f"svg_down_{idx}", on_click=swap_svg, args=(idx, "down"))
             c_txt.text(f"{idx+1}: {name}")
 
     # SVG個別設定
@@ -1039,7 +1042,7 @@ with st.sidebar:
             if f"fa_{target_name}" not in st.session_state: st.session_state[f"fa_{target_name}"] = float(s_data.get('fill_alpha', 1.0))
             if f"sc_{target_name}" not in st.session_state: st.session_state[f"sc_{target_name}"] = s_data.get('stroke_color', "#000000")
             if f"sa_{target_name}" not in st.session_state: st.session_state[f"sa_{target_name}"] = float(s_data.get('stroke_alpha', 1.0))
-            if f"swd_{target_name}" not in st.session_state: st.session_state[f"swd_{target_name}"] = int(s_data.get('stroke_width', 2))
+            if f"swd_{target_name}" not in st.session_state: st.session_state[f"swd_{target_name}"] = int(s_data.get('stroke_width', 10))
             if f"sbd_{target_name}" not in st.session_state: st.session_state[f"sbd_{target_name}"] = float(s_data.get('stroke_blur', 0.0))
             
             if f"sw_{target_name}" not in st.session_state: st.session_state[f"sw_{target_name}"] = int(s_data.get('w', default_w))
@@ -1117,7 +1120,7 @@ with st.sidebar:
         if f"tsx{i}" not in st.session_state:
             st.session_state[f"tsx{i}"] = 100   # 横倍率
         if f"tlh{i}" not in st.session_state:
-            st.session_state[f"tlh{i}"] = 1.0   # 行間
+            st.session_state[f"tlh{i}"] = 1.1   # 行間
         if f"tls{i}" not in st.session_state:
             st.session_state[f"tls{i}"] = 0     # 文字間
         if f"ts{i}" not in st.session_state:
@@ -1133,7 +1136,7 @@ with st.sidebar:
         if f"oc{i}" not in st.session_state:
             st.session_state[f"oc{i}"] = "#FFFFFF" # 縁の色(白)
         if f"ow{i}" not in st.session_state:
-            st.session_state[f"ow{i}"] = 0      # 縁太さ
+            st.session_state[f"ow{i}"] = 4      # 縁太さ
         # -----------------------------
 
         with st.expander(f"テキスト{i+1}"):
