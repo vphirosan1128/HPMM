@@ -442,8 +442,10 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
         url = f"data:image/svg+xml;base64,{b64}"
         scale_x = -1 if s['flip_h'] else 1
         scale_y = -1 if s['flip_v'] else 1
+        
         transform = f'rotate({s["rotate"]}deg) scale({scale_x}, {scale_y})'
-        svg_html += f'<div class="svg-overlay" style="left:{s["x"]}px; top:{s["y"]}px; width:{s["w"]}px; height:{s["h"]}px; transform:{transform};"><img src="{url}"></div>'
+        svg_html += f'<div class="svg-overlay" style="left:{s["x"] - s["w"]/2}px; top:{s["y"] - s["h"]/2}px; width:{s["w"]}px; height:{s["h"]}px; transform:{transform};"><img src="{url}"></div>'
+        
         svg_data.append({"src": url, **s})
 
     txt_html = ""
@@ -549,7 +551,7 @@ def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
                     const svgs = {json.dumps(svg_data)};
                     for (const s of svgs) {{
                         ctx.save();
-                        ctx.translate(s.x + s.w/2, s.y + s.h/2);
+                        ctx.translate(s.x, s.y);
                         ctx.rotate(s.rotate * Math.PI / 180);
                         ctx.scale(s.flip_h ? -1 : 1, s.flip_v ? -1 : 1);
                         ctx.drawImage(await load(s.src), -s.w/2, -s.h/2, s.w, s.h);
