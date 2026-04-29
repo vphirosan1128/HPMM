@@ -1041,16 +1041,9 @@ with st.sidebar:
             # 元の比率からデフォルトサイズを計算
             orig_w, orig_h = get_svg_original_ratio(target_svg['content'])
             if orig_w >= orig_h:
-                default_w, default_h = 400, int(400 * (orig_h / orig_w))
+                default_w, default_h = 250, int(250 * (orig_h / orig_w))
             else:
-                default_h, default_w = 400, int(400 * (orig_w / orig_h))
-
-            # 元の比率からデフォルトサイズを計算
-            orig_w, orig_h = get_svg_original_ratio(target_svg['content'])
-            if orig_w >= orig_h:
-                default_w, default_h = 400, int(400 * (orig_h / orig_w))
-            else:
-                default_h, default_w = 400, int(400 * (orig_w / orig_h))
+                default_h, default_w = 250, int(250 * (orig_w / orig_h))
 
             # --- 1. ここでセッションステートを初期化する（エラー回避のための必須処理） ---
             if f"fc_{target_name}" not in st.session_state: st.session_state[f"fc_{target_name}"] = s_data.get('color', "#FFFFFF")
@@ -1125,7 +1118,7 @@ with st.sidebar:
             # aquapfontを優先、なければリストの先頭
             st.session_state[f"tf{i}"] = "aqua_pfont" if "aqua_pfont" in system_fonts else system_fonts[0]
         if f"td{i}" not in st.session_state:
-            st.session_state[f"td{i}"] = "横書き" # デフォルト方向
+            st.session_state[f"td{i}"] = "縦書き" # デフォルト方向
         if f"tb{i}" not in st.session_state:
             st.session_state[f"tb{i}"] = False  # 太字
         if f"ti{i}" not in st.session_state:
