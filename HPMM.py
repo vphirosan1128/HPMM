@@ -383,6 +383,19 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
             z-index: 9999;
         "></div>
         """
+        # 数値ラベル用のスタイル（白フチをつけて背景画像と同化しないようにする）
+        label_style = "position: absolute; color: rgb(255, 75, 75); font-size: 24px; font-weight: bold; text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff; z-index: 10000; pointer-events: none;"
+        
+        # 原点(0)のラベル
+        grid_html += f'<div style="{label_style} left: 12px; top: 12px;">0</div>'
+        
+        # X軸（横）のラベル
+        for x in range(grid_size, c_w, grid_size):
+            grid_html += f'<div style="{label_style} left: {x + 12}px; top: 12px;">{x}</div>'
+            
+        # Y軸（縦）のラベル
+        for y in range(grid_size, c_h, grid_size):
+            grid_html += f'<div style="{label_style} left: 12px; top: {y + 12}px;">{y}</div>'
 
     svg_html = ""
     svg_data = []
