@@ -911,11 +911,11 @@ with st.sidebar:
     if up_imgs is not None:
         # 1. 常にアップローダーの現在の状態（削除反映後）でリストを再構築する
         new_cached_imgs = []
-        for f in up_imgs[:4]:
+        for i, f in enumerate(up_imgs[:4]): # enumerate で i を取得
             img = Image.open(f).convert("RGB")
-            img.filename = f.name  # ファイル名をその場で付与
+            img.filename = f"{i}_{f.name}"  # インデックスを付けて一意にする
             new_cached_imgs.append(img)
-        
+
         # 2. セッション状態を最新の状態（空なら空、あればある分だけ）で上書き
         st.session_state.cached_imgs = new_cached_imgs
 
@@ -925,7 +925,16 @@ with st.sidebar:
     if imgs:
         for i, img_obj in enumerate(imgs):
             fname = getattr(img_obj, 'filename', f"Image_{i}")
-            s_data = next((s for s in saved_imgs if s.get('filename') == fname), {})
+
+            # s_data = next((s for s in saved_imgs if s.get('filename') == fname), {})
+            # --- SVGのロジックを見本にした修正：順番(i)で設定を強制同期 ---
+            if i < len(saved_imgs):
+                s_data = saved_imgs[i]
+                # JSON側に保存されていた名前を、現在のファイル名に上書きして同期する
+                s_data['filename'] = fname
+            else:
+                s_data = {}
+            
             with st.expander(f"画像{i+1}調整: {fname}"):
                 col1, col2 = st.columns(2)
                 sc = col1.number_input("倍率 (%)", 10, 1000, int(s_data.get('scale', 100)), step=10, key=f"s{i}")
@@ -986,17 +995,19 @@ with st.sidebar:
     if up_svgs is not None: # 空リストの場合でも中に入るようにする
 
         if len(up_svgs) == 0:
+
             st.session_state.cached_svg_raw = []
             st.session_state.svg_order = []
 
         else:
 
             st.session_state.cached_svg_raw = []
-            for f in up_svgs[:40]:
+            for i, f in enumerate(up_svgs[:40]): # enumerate で i を取得
                 f.seek(0)
-                st.session_state.cached_svg_raw.append({'filename': f.name, 'content': f.read().decode('utf-8')})
+                st.session_state.cached_svg_raw.append({'filename': f"{i}_{f.name}", 'content': f.read().decode('utf-8')}) # インデックスを付与
             
-            current_names = [f.name for f in up_svgs[:40]]
+            current_names = [f"{i}_{f.name}" for i, f in enumerate(up_svgs[:40])] # インデックスを付与
+
             if st.session_state.svg_order != current_names:
                 new_order = [name for name in st.session_state.svg_order if name in current_names]
                 for name in current_names:
