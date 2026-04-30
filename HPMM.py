@@ -336,6 +336,12 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
     if overlay_img and overlay_settings:
         ov_img = overlay_img.copy().convert("RGBA")
         
+        # 反転処理
+        if overlay_settings.get("flip_h"):
+            ov_img = ov_img.transpose(Image.FLIP_LEFT_RIGHT)
+        if overlay_settings.get("flip_v"):
+            ov_img = ov_img.transpose(Image.FLIP_TOP_BOTTOM)
+
         # 枠線（四角い外枠）の追加
         bw = overlay_settings.get("border_w", 0)
         bc = overlay_settings.get("border_c", "#FFFFFF")
@@ -652,6 +658,7 @@ def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
     return js
 
 def sync_all_settings_to_state(num_txt_local, current_svg_order):
+
     st.session_state.config["canvas"] = {"w": c_w, "h": c_h, "bg": bg, "lw": lw}
     st.session_state.config["preview_zoom"] = preview_zoom
     st.session_state.config["layout"] = {"type": layout, "ratios": ratios}
@@ -666,6 +673,7 @@ def sync_all_settings_to_state(num_txt_local, current_svg_order):
             'flip_h': st.session_state.get(f"ifh{i}", False),
             'flip_v': st.session_state.get(f"ifv{i}", False),
         })
+
     st.session_state.config["images"] = new_imgs
     new_svgs = []
     for name in current_svg_order:
@@ -685,6 +693,7 @@ def sync_all_settings_to_state(num_txt_local, current_svg_order):
             'stroke_width': st.session_state.get(f"swd_{name}", 2),
             'stroke_blur': st.session_state.get(f"sbd_{name}", 0.0),
         })
+
     st.session_state.config["svgs"] = new_svgs
     new_txts = []
     for i in range(num_txt_local):
@@ -706,10 +715,10 @@ def sync_all_settings_to_state(num_txt_local, current_svg_order):
             'outline_c': st.session_state.get(f"oc{i}", "#FFFFFF"),
             'outline_w': st.session_state.get(f"ow{i}", 4)
         })
+    
     st.session_state.config["texts"] = new_txts
     st.session_state.config["num_txt"] = num_txt_local
 
-    # ↓↓↓ ここから追加 ↓↓↓
     if st.session_state.cached_overlay:
         st.session_state.config["overlay"] = {
             'scale': st.session_state.get("ov_scale", 100),
@@ -718,6 +727,10 @@ def sync_all_settings_to_state(num_txt_local, current_svg_order):
             'y': st.session_state.get("ov_y", 0),
             'border_w': st.session_state.get("ov_bw", 0),
             'border_c': st.session_state.get("ov_bc", "#FFFFFF"),
+            
+            'flip_h': st.session_state.get("ov_fh", False),
+            'flip_v': st.session_state.get("ov_fv", False),
+
             'filename': getattr(st.session_state.cached_overlay, 'filename', 'overlay.png')
         }
     else:
@@ -779,6 +792,9 @@ with st.sidebar:
                 st.session_state["ov_bw"] = ov.get("border_w", 0)
                 st.session_state["ov_bc"] = ov.get("border_c", "#FFFFFF")
 
+                st.session_state["ov_fh"] = ov.get("flip_h", False)
+                st.session_state["ov_fv"] = ov.get("flip_v", False)
+
             # 1. テキスト数を反映
             t_count = int(temp_config.get("num_txt", 0))
             st.session_state[f"num_txt_{st.session_state.reset_count}"] = t_count
@@ -818,7 +834,6 @@ with st.sidebar:
     col_alw, col_abg = st.columns(2)
     lw = col_alw.number_input("枠線幅", value=int(conf.get("canvas", {}).get("lw", 10)), step=10)
     bg = col_abg.text_input("背景色", conf.get("canvas", {}).get("bg", "#FFFFFF"))
-
 
     preview_zoom = st.slider("プレビュー表示倍率 (%)", 5, 100, int(conf.get("preview_zoom", 60)), step=5)
 
@@ -977,6 +992,10 @@ with st.sidebar:
         fname = getattr(st.session_state.cached_overlay, 'filename', '画像')
         with st.expander(f"オーバーレイ設定: {fname}"):
 
+            col_ofh, col_ofv = st.columns(2)
+            ov_fh = col_ofh.checkbox("横反転", s_data.get('flip_h', False), key="ov_fh")
+            ov_fv = col_ofv.checkbox("縦反転", s_data.get('flip_v', False), key="ov_fv")
+
             col_o1, col_o2 = st.columns(2)
             ov_sc = col_o1.number_input("倍率 (%)", 1, 1000, int(s_data.get('scale', 100)), step=10, key="ov_scale")
             ov_rot = col_o2.number_input("回転", -360, 360, int(s_data.get('rotate', 0)), step=10, key="ov_rotate")
@@ -991,7 +1010,8 @@ with st.sidebar:
 
             overlay_settings = {
                 'scale': ov_sc, 'rotate': ov_rot, 'x': ov_x, 'y': ov_y, 
-                'border_w': ov_bw, 'border_c': ov_bc, 'filename': fname
+                'border_w': ov_bw, 'border_c': ov_bc, 'filename': fname,
+                'flip_h': ov_fh, 'flip_v': ov_fv
             }
 
     # SVGアップロード
