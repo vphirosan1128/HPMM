@@ -810,10 +810,16 @@ with st.sidebar:
             st.session_state.trigger_draw = True
             
     conf = st.session_state.config
-    c_w = st.number_input("幅", value=int(conf.get("canvas", {}).get("w", 1080)), step=10)
-    c_h = st.number_input("高さ", value=int(conf.get("canvas", {}).get("h", 2160)), step=10)
-    bg = st.text_input("背景色", conf.get("canvas", {}).get("bg", "#FFFFFF"))
-    lw = st.number_input("枠線", value=int(conf.get("canvas", {}).get("lw", 10)), step=10)
+
+    col_aw, col_ah = st.columns(2)
+    c_w = col_aw.number_input("幅", value=int(conf.get("canvas", {}).get("w", 1080)), step=10)
+    c_h = col_ah.number_input("高さ", value=int(conf.get("canvas", {}).get("h", 2160)), step=10)
+
+    col_alw, col_abg = st.columns(2)
+    lw = col_alw.number_input("枠線幅", value=int(conf.get("canvas", {}).get("lw", 10)), step=10)
+    bg = col_abg.text_input("背景色", conf.get("canvas", {}).get("bg", "#FFFFFF"))
+
+
     preview_zoom = st.slider("プレビュー表示倍率 (%)", 5, 100, int(conf.get("preview_zoom", 60)), step=5)
 
     show_grid = st.checkbox("グリッドを表示", value=True)
@@ -936,14 +942,19 @@ with st.sidebar:
                 s_data = {}
             
             with st.expander(f"画像{i+1}調整: {fname}"):
-                col1, col2 = st.columns(2)
-                sc = col1.number_input("倍率 (%)", 10, 1000, int(s_data.get('scale', 100)), step=10, key=f"s{i}")
-                rot = col2.number_input("回転", -360, 360, int(s_data.get('rotate', 0)), step=10, key=f"r{i}")
                 col_fh, col_fv = st.columns(2)
                 fh = col_fh.checkbox("横反転", s_data.get('flip_h', False), key=f"ifh{i}")
                 fv = col_fv.checkbox("縦反転", s_data.get('flip_v', False), key=f"ifv{i}")
-                ox = st.number_input("左右", value=int(s_data.get('offset_x', 0)), step=10, key=f"x{i}")
-                oy = st.number_input("上下", value=int(s_data.get('offset_y', 0)), step=10, key=f"y{i}")
+
+                col1, col2 = st.columns(2)
+                sc = col1.number_input("倍率 (%)", 10, 1000, int(s_data.get('scale', 100)), step=10, key=f"s{i}")
+                rot = col2.number_input("回転", -360, 360, int(s_data.get('rotate', 0)), step=10, key=f"r{i}")
+
+                col_x, col_y = st.columns(2)
+                ox = col_x.number_input("X位置", value=int(s_data.get('offset_x', 0)), step=10, key=f"x{i}")
+                oy = col_y.number_input("Y位置", value=int(s_data.get('offset_y', 0)), step=10, key=f"y{i}")
+
+                
                 img_settings.append({'filename': fname, 'scale': sc, 'rotate': rot, 'offset_x': ox, 'offset_y': oy, 'flip_h': fh, 'flip_v': fv})
 
     # オーバーレイ画像アップロード
@@ -965,12 +976,15 @@ with st.sidebar:
         s_data = conf.get("overlay", {})
         fname = getattr(st.session_state.cached_overlay, 'filename', '画像')
         with st.expander(f"オーバーレイ設定: {fname}"):
+
             col_o1, col_o2 = st.columns(2)
             ov_sc = col_o1.number_input("倍率 (%)", 1, 1000, int(s_data.get('scale', 100)), step=10, key="ov_scale")
             ov_rot = col_o2.number_input("回転", -360, 360, int(s_data.get('rotate', 0)), step=10, key="ov_rotate")
-            ov_x = st.number_input("X位置", -2000, 4000, int(s_data.get('x', 0)), step=10, key="ov_x")
-            ov_y = st.number_input("Y位置", -2000, 4000, int(s_data.get('y', 0)), step=10, key="ov_y")
-            
+
+            col_ox, col_oy = st.columns(2)
+            ov_x = col_ox.number_input("X位置", -2000, 4000, int(s_data.get('x', 0)), step=10, key="ov_x")
+            ov_y = col_oy.number_input("Y位置", -2000, 4000, int(s_data.get('y', 0)), step=10, key="ov_y")
+
             col_b1, col_b2 = st.columns(2)
             ov_bw = col_b1.number_input("枠線太さ", 0, 200, int(s_data.get('border_w', 0)), step=1, key="ov_bw")
             ov_bc = col_b2.text_input("枠線色", s_data.get('border_c', "#FFFFFF"), key="ov_bc")
@@ -1073,6 +1087,20 @@ with st.sidebar:
             if f"svgr_{target_name}" not in st.session_state: st.session_state[f"svgr_{target_name}"] = int(s_data.get('rotate', 0))
 
             # --- 2. ウィジェットからは「初期値(value)」を削除し、引数をキーワードで明示する ---
+            col_sfh, col_sfv = st.columns(2)
+            sfh = col_sfh.checkbox("横反転", key=f"sfh_{target_name}")
+            sfv = col_sfv.checkbox("縦反転", key=f"sfv_{target_name}")
+
+            col_sx, col_sy = st.columns(2)
+            svg_x = col_sx.number_input("X位置", min_value=-1000, max_value=4000, step=10, key=f"sx_{target_name}")
+            svg_y = col_sy.number_input("Y位置", min_value=-1000, max_value=4000, step=10, key=f"sy_{target_name}")
+
+            col1, col2 = st.columns(2)
+            svg_w = col1.number_input("幅", min_value=10, max_value=4000, step=10, key=f"sw_{target_name}")
+            svg_h = col2.number_input("高", min_value=10, max_value=4000, step=10, key=f"sh_{target_name}")
+
+            svg_rot = st.number_input("回転", min_value=-360, max_value=360, step=10, key=f"svgr_{target_name}")
+
             col_c1, col_c2 = st.columns(2)
             f_color = col_c1.text_input("塗り色", key=f"fc_{target_name}")
             f_alpha = col_c2.number_input("塗り透過 (0-1.0)", min_value=0.0, max_value=1.0, step=0.1, key=f"fa_{target_name}")
@@ -1080,15 +1108,6 @@ with st.sidebar:
             s_alpha = col_c2.number_input("枠線透過 (0-1.0)", min_value=0.0, max_value=1.0, step=0.1, key=f"sa_{target_name}")
             s_width = col_c1.number_input("枠線幅", min_value=0, max_value=500, step=1, key=f"swd_{target_name}")
             s_blur = col_c2.number_input("枠線ぼかし", min_value=0.0, max_value=50.0, step=0.1, key=f"sbd_{target_name}")
-
-            col1, col2 = st.columns(2)
-            svg_w = col1.number_input("幅", min_value=10, max_value=4000, step=10, key=f"sw_{target_name}")
-            svg_h = col2.number_input("高", min_value=10, max_value=4000, step=10, key=f"sh_{target_name}")
-            sfh = st.checkbox("横反転", key=f"sfh_{target_name}")
-            sfv = st.checkbox("縦反転", key=f"sfv_{target_name}")
-            svg_x = st.number_input("X位置", min_value=-1000, max_value=4000, step=10, key=f"sx_{target_name}")
-            svg_y = st.number_input("Y位置", min_value=-1000, max_value=4000, step=10, key=f"sy_{target_name}")
-            svg_rot = st.number_input("回転", min_value=-360, max_value=360, step=10, key=f"svgr_{target_name}")
 
             svg_settings.append({
                 'filename': target_name, 
@@ -1163,20 +1182,31 @@ with st.sidebar:
             t_val = st.text_area("内容", key=f"tv{i}", height=100)
             t_font = st.selectbox("フォント", system_fonts, key=f"tf{i}")
             t_dir = st.radio("方向", ["横書き", "縦書き"], horizontal=True, key=f"td{i}")
-            col_b, col_i = st.columns(2)
-            tb = col_b.checkbox("太字", key=f"tb{i}")
-            ti = col_i.checkbox("斜体", key=f"ti{i}")
-            tsy = st.number_input("縦倍率 (%)", 10, 500, step=10, key=f"tsy{i}")
-            tsx = st.number_input("横倍率 (%)", 10, 500, step=10, key=f"tsx{i}")
-            tlh = st.number_input("行間", 0.1, 10.0, step=0.1, key=f"tlh{i}")
-            tls = st.number_input("文字間", -500, 500, step=1, key=f"tls{i}")
-            ts = st.number_input("サイズ", 1, 2000, step=1, key=f"ts{i}")
+
+            col_ts, col_tc = st.columns(2)
+            ts = col_ts.number_input("サイズ", 1, 2000, step=1, key=f"ts{i}")
+            tc = col_tc.text_input("文字色", key=f"tc{i}")
+
+            col_ow, col_oc = st.columns(2)
+            ow = col_ow.number_input("縁太さ", 0, 200, step=1, key=f"ow{i}")
+            oc = col_oc.text_input("縁の色", key=f"oc{i}")
+
+            col_tb, col_ti = st.columns(2)
+            tb = col_tb.checkbox("太字", key=f"tb{i}")
+            ti = col_ti.checkbox("斜体", key=f"ti{i}")
+
+            col_tlh, col_tls = st.columns(2)
+            tlh = col_tlh.number_input("行間", 0.1, 10.0, step=0.1, key=f"tlh{i}")
+            tls = col_tls.number_input("文字間", -500, 500, step=1, key=f"tls{i}")
+
+            col_tsy, col_tsx = st.columns(2)
+            tsy = col_tsy.number_input("縦倍率 (%)", 10, 500, step=10, key=f"tsy{i}")
+            tsx = col_tsx.number_input("横倍率 (%)", 10, 500, step=10, key=f"tsx{i}")
             trt = st.number_input("回転", -360, 360, step=10, key=f"trt{i}")
-            tx = st.number_input("X位置", -2000, 5000, step=10, key=f"tx{i}")
-            ty = st.number_input("Y位置", -2000, 5000, step=10, key=f"ty{i}")
-            tc = st.text_input("文字色", key=f"tc{i}")
-            oc = st.text_input("縁の色", key=f"oc{i}")
-            ow = st.number_input("縁太さ", 0, 200, step=1, key=f"ow{i}")
+
+            col_tx, col_ty = st.columns(2)
+            tx = col_tx.number_input("X位置", -2000, 5000, step=10, key=f"tx{i}")
+            ty = col_ty.number_input("Y位置", -2000, 5000, step=10, key=f"ty{i}")
 
             txt_settings.append({
                 'text': t_val, 
