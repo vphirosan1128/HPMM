@@ -673,28 +673,30 @@ def sync_all_settings_to_state(num_txt_local, current_svg_order):
             'flip_h': st.session_state.get(f"ifh{i}", False),
             'flip_v': st.session_state.get(f"ifv{i}", False),
         })
-
     st.session_state.config["images"] = new_imgs
+
+    # 【修正】enumerate を使ってインデックス (i) を取得するように変更
     new_svgs = []
-    for name in current_svg_order:
+    for i, name in enumerate(current_svg_order):
         new_svgs.append({
             'filename': name,
-            'color': st.session_state.get(f"fc_{name}", "#FFFFFF"),
-            'fill_alpha': st.session_state.get(f"fa_{name}", 1.0),
-            'stroke_color': st.session_state.get(f"sc_{name}", "#000000"),
-            'stroke_alpha': st.session_state.get(f"sa_{name}", 1.0),
-            'w': st.session_state.get(f"sw_{name}", 400),
-            'h': st.session_state.get(f"sh_{name}", 300),
-            'flip_h': st.session_state.get(f"sfh_{name}", False),
-            'flip_v': st.session_state.get(f"sfv_{name}", False),
-            'x': st.session_state.get(f"sx_{name}", 100),
-            'y': st.session_state.get(f"sy_{name}", 100),
-            'rotate': st.session_state.get(f"svgr_{name}", 0),
-            'stroke_width': st.session_state.get(f"swd_{name}", 2),
-            'stroke_blur': st.session_state.get(f"sbd_{name}", 0.0),
+            # name ではなく i を使って取得
+            'color': st.session_state.get(f"fc_{i}", "#FFFFFF"),
+            'fill_alpha': st.session_state.get(f"fa_{i}", 1.0),
+            'stroke_color': st.session_state.get(f"sc_{i}", "#000000"),
+            'stroke_alpha': st.session_state.get(f"sa_{i}", 1.0),
+            'w': st.session_state.get(f"sw_{i}", 400),
+            'h': st.session_state.get(f"sh_{i}", 300),
+            'flip_h': st.session_state.get(f"sfh_{i}", False),
+            'flip_v': st.session_state.get(f"sfv_{i}", False),
+            'x': st.session_state.get(f"sx_{i}", 100),
+            'y': st.session_state.get(f"sy_{i}", 100),
+            'rotate': st.session_state.get(f"svgr_{i}", 0),
+            'stroke_width': st.session_state.get(f"swd_{i}", 2),
+            'stroke_blur': st.session_state.get(f"sbd_{i}", 0.0),
         })
-
     st.session_state.config["svgs"] = new_svgs
+
     new_txts = []
     for i in range(num_txt_local):
         new_txts.append({
@@ -715,8 +717,8 @@ def sync_all_settings_to_state(num_txt_local, current_svg_order):
             'outline_c': st.session_state.get(f"oc{i}", "#FFFFFF"),
             'outline_w': st.session_state.get(f"ow{i}", 4)
         })
-    
     st.session_state.config["texts"] = new_txts
+
     st.session_state.config["num_txt"] = num_txt_local
 
     if st.session_state.cached_overlay:
@@ -766,22 +768,23 @@ with st.sidebar:
             for i in range(min(len(json_svgs), len(current_order))):
                 t_name = current_order[i]
                 json_svgs[i]['filename'] = t_name # JSON側の名前を実体に強制同期
-                
+
                 # 2. ウィジェットのキーに直接値を叩き込んで、表示を即時更新させる
                 s_c = json_svgs[i]
-                if 'color' in s_c: st.session_state[f"fc_{t_name}"] = s_c['color']
-                if 'fill_alpha' in s_c: st.session_state[f"fa_{t_name}"] = float(s_c['fill_alpha'])
-                if 'stroke_color' in s_c: st.session_state[f"sc_{t_name}"] = s_c['stroke_color']
-                if 'stroke_alpha' in s_c: st.session_state[f"sa_{t_name}"] = float(s_c['stroke_alpha'])
-                if 'w' in s_c: st.session_state[f"sw_{t_name}"] = int(s_c['w'])
-                if 'h' in s_c: st.session_state[f"sh_{t_name}"] = int(s_c['h'])
-                if 'flip_h' in s_c: st.session_state[f"sfh_{t_name}"] = s_c['flip_h']
-                if 'flip_v' in s_c: st.session_state[f"sfv_{t_name}"] = s_c['flip_v']
-                if 'x' in s_c: st.session_state[f"sx_{t_name}"] = int(s_c['x'])
-                if 'y' in s_c: st.session_state[f"sy_{t_name}"] = int(s_c['y'])
-                if 'rotate' in s_c: st.session_state[f"svgr_{t_name}"] = int(s_c['rotate'])
-                if 'stroke_width' in s_c: st.session_state[f"swd_{t_name}"] = int(s_c['stroke_width'])
-                if 'stroke_blur' in s_c: st.session_state[f"sbd_{t_name}"] = float(s_c['stroke_blur'])
+                # 【修正】t_name ではなく、ループ変数の i を使用する
+                if 'color' in s_c: st.session_state[f"fc_{i}"] = s_c['color']
+                if 'fill_alpha' in s_c: st.session_state[f"fa_{i}"] = float(s_c['fill_alpha'])
+                if 'stroke_color' in s_c: st.session_state[f"sc_{i}"] = s_c['stroke_color']
+                if 'stroke_alpha' in s_c: st.session_state[f"sa_{i}"] = float(s_c['stroke_alpha'])
+                if 'w' in s_c: st.session_state[f"sw_{i}"] = int(s_c['w'])
+                if 'h' in s_c: st.session_state[f"sh_{i}"] = int(s_c['h'])
+                if 'flip_h' in s_c: st.session_state[f"sfh_{i}"] = s_c['flip_h']
+                if 'flip_v' in s_c: st.session_state[f"sfv_{i}"] = s_c['flip_v']
+                if 'x' in s_c: st.session_state[f"sx_{i}"] = int(s_c['x'])
+                if 'y' in s_c: st.session_state[f"sy_{i}"] = int(s_c['y'])
+                if 'rotate' in s_c: st.session_state[f"svgr_{i}"] = int(s_c['rotate'])
+                if 'stroke_width' in s_c: st.session_state[f"swd_{i}"] = int(s_c['stroke_width'])
+                if 'stroke_blur' in s_c: st.session_state[f"sbd_{i}"] = float(s_c['stroke_blur'])
 
             if "overlay" in temp_config and temp_config["overlay"]:
                 ov = temp_config["overlay"]
@@ -928,11 +931,36 @@ with st.sidebar:
 
     up_imgs = st.file_uploader("画像 (最大4枚)", type=["jpg", "png"], accept_multiple_files=True, key=f"up_imgs_{st.session_state.reset_count}")
 
+    # --- 追加: 削除検知と値のシフト（画像） ---
+    if "prev_img_ids" not in st.session_state:
+        st.session_state.prev_img_ids = []
+        
+    current_img_ids = [f.file_id for f in up_imgs] if up_imgs else []
+    
+    if len(current_img_ids) < len(st.session_state.prev_img_ids):
+        # どのインデックスが削除されたか特定
+        for i, old_id in enumerate(st.session_state.prev_img_ids):
+            if old_id not in current_img_ids:
+                # i番目が消えたので、i+1以降の設定値を前に詰める
+                for j in range(i, len(st.session_state.prev_img_ids) - 1):
+                    st.session_state[f"s{j}"] = st.session_state.get(f"s{j+1}", 100)
+                    st.session_state[f"r{j}"] = st.session_state.get(f"r{j+1}", 0)
+                    st.session_state[f"x{j}"] = st.session_state.get(f"x{j+1}", 0)
+                    st.session_state[f"y{j}"] = st.session_state.get(f"y{j+1}", 0)
+                    st.session_state[f"ifh{j}"] = st.session_state.get(f"ifh{j+1}", False)
+                    st.session_state[f"ifv{j}"] = st.session_state.get(f"ifv{j+1}", False)
+                break # 1回の操作で1つ消える前提
+
+    st.session_state.prev_img_ids = current_img_ids
+    # ----------------------------------------
+
     # 画像アップロード
     if conf_file and 'temp_config' in locals():
         img_names = [img.get('filename', '---') for img in temp_config.get("images", [])]
         if img_names:
-            guide_imgs = "必要な画像：<br>" + "<br>".join([f"・画像{i+1}: {name}" for i, name in enumerate(img_names)])
+            # guide_imgs = "必要な画像：<br>" + "<br>".join([f"・画像{i+1}: {name}" for i, name in enumerate(img_names)])
+            guide_imgs = "必要な画像：<br>" + "<br>".join([f"・画像{i+1}: re.sub(r'^\d+_', '',{name})" for i, name in enumerate(img_names)])
+
             st.markdown(f'<div class="guide-box" style="color: #FF8888; border: 1px solid red; margin-bottom: 5px;">{guide_imgs}</div>', unsafe_allow_html=True)
 
     st.markdown('<p class="upload-caption">※ 5枚目以降の画像は無視されます</p>', unsafe_allow_html=True)
@@ -965,7 +993,7 @@ with st.sidebar:
             else:
                 s_data = {}
             
-            with st.expander(f"画像{i+1}調整: {fname}"):
+            with st.expander(f"画像調整: {fname}"):
                 col_fh, col_fv = st.columns(2)
                 fh = col_fh.checkbox("横反転", s_data.get('flip_h', False), key=f"ifh{i}")
                 fv = col_fv.checkbox("縦反転", s_data.get('flip_v', False), key=f"ifv{i}")
@@ -1025,6 +1053,26 @@ with st.sidebar:
 
     up_svgs = st.file_uploader("SVG (最大40個)", type=["svg"], accept_multiple_files=True, key=f"up_svgs_{st.session_state.reset_count}")    
 
+    # --- 追加: 削除検知と値のシフト（SVG） ---
+    if "prev_svg_ids" not in st.session_state:
+        st.session_state.prev_svg_ids = []
+        
+    current_svg_ids = [f.file_id for f in up_svgs] if up_svgs else []
+    
+    if len(current_svg_ids) < len(st.session_state.prev_svg_ids):
+        for i, old_id in enumerate(st.session_state.prev_svg_ids):
+            if old_id not in current_svg_ids:
+                # i番目が消えたので前に詰める
+                for j in range(i, len(st.session_state.prev_svg_ids) - 1):
+                    keys = ["fc", "fa", "sc", "sa", "sw", "sh", "sfh", "sfv", "sx", "sy", "svgr", "swd", "sbd"]
+                    for k in keys:
+                        # 例: fc_1 の値を fc_0 に上書き
+                        st.session_state[f"{k}_{j}"] = st.session_state.get(f"{k}_{j+1}")
+                break
+                
+    st.session_state.prev_svg_ids = current_svg_ids
+    # ----------------------------------------
+
     # SVGアップロード
     if conf_file and 'temp_config' in locals():
         svg_names = [svg.get('filename', '---') for svg in temp_config.get("svgs", [])]
@@ -1065,16 +1113,25 @@ with st.sidebar:
         
         # --- 追加: コールバック関数の定義 ---
         def swap_svg(idx, direction):
-            # 常に画面上の最新のテキスト数を取得して退避
             live_num_txt = st.session_state.get(f"num_txt_{st.session_state.reset_count}", int(conf.get("num_txt", 0)))
             sync_all_settings_to_state(live_num_txt, st.session_state.svg_order)
             
-            if direction == "up" and idx > 0:
-                st.session_state.svg_order[idx], st.session_state.svg_order[idx-1] = st.session_state.svg_order[idx-1], st.session_state.svg_order[idx]
-            elif direction == "down" and idx < len(st.session_state.svg_order)-1:
-                st.session_state.svg_order[idx], st.session_state.svg_order[idx+1] = st.session_state.svg_order[idx+1], st.session_state.svg_order[idx]
+            target_idx = idx - 1 if direction == "up" else idx + 1
             
-            st.session_state.trigger_draw = True    
+            if (direction == "up" and idx > 0) or (direction == "down" and idx < len(st.session_state.svg_order)-1):
+                # 1. ファイルの順番を入れ替え
+                st.session_state.svg_order[idx], st.session_state.svg_order[target_idx] = st.session_state.svg_order[target_idx], st.session_state.svg_order[idx]
+                
+                # 2. 【追加】セッションの設定値（インデックスベース）を直接入れ替え
+                keys_to_swap = ["fc", "fa", "sc", "sa", "sw", "sh", "sfh", "sfv", "sx", "sy", "svgr", "swd", "sbd"]
+                for k in keys_to_swap:
+                    key1, key2 = f"{k}_{idx}", f"{k}_{target_idx}"
+                    val1, val2 = st.session_state.get(key1), st.session_state.get(key2)
+                    # 値が存在する場合のみスワップ
+                    st.session_state[key1] = val2 if val2 is not None else st.session_state.get(key1)
+                    st.session_state[key2] = val1 if val1 is not None else st.session_state.get(key2)
+
+            st.session_state.trigger_draw = True
         
         for idx, name in enumerate(st.session_state.svg_order):
             c_btn1, c_btn2, c_txt = st.columns([1, 1, 5])
@@ -1085,11 +1142,12 @@ with st.sidebar:
             c_txt.text(f"{idx+1}: {name}")
 
     # SVG個別設定
-    saved_svgs = conf.get("svgs", [])
-    for target_name in st.session_state.svg_order:
+    saved_svgs = conf.get("svgs", [])        
+    for idx, target_name in enumerate(st.session_state.svg_order): # enumerate で idx を取得
         target_svg = next((s for s in raw_svg_list if s['filename'] == target_name), None)
         if not target_svg: continue
-        s_data = next((s for s in saved_svgs if s.get('filename') == target_name), {})
+        s_data = saved_svgs[idx] if idx < len(saved_svgs) else {} # 順番で取得        
+        
         with st.expander(f"SVG設定: {target_name}"):
 
             # 元の比率からデフォルトサイズを計算
@@ -1100,43 +1158,43 @@ with st.sidebar:
                 default_h, default_w = 250, int(250 * (orig_w / orig_h))
 
             # --- 1. ここでセッションステートを初期化する（エラー回避のための必須処理） ---
-            if f"fc_{target_name}" not in st.session_state: st.session_state[f"fc_{target_name}"] = s_data.get('color', "#FFFFFF")
-            if f"fa_{target_name}" not in st.session_state: st.session_state[f"fa_{target_name}"] = float(s_data.get('fill_alpha', 1.0))
-            if f"sc_{target_name}" not in st.session_state: st.session_state[f"sc_{target_name}"] = s_data.get('stroke_color', "#000000")
-            if f"sa_{target_name}" not in st.session_state: st.session_state[f"sa_{target_name}"] = float(s_data.get('stroke_alpha', 1.0))
-            if f"swd_{target_name}" not in st.session_state: st.session_state[f"swd_{target_name}"] = int(s_data.get('stroke_width', 10))
-            if f"sbd_{target_name}" not in st.session_state: st.session_state[f"sbd_{target_name}"] = float(s_data.get('stroke_blur', 0.0))
+            if f"fc_{idx}" not in st.session_state: st.session_state[f"fc_{idx}"] = s_data.get('color', "#FFFFFF")
+            if f"fa_{idx}" not in st.session_state: st.session_state[f"fa_{idx}"] = float(s_data.get('fill_alpha', 1.0))
+            if f"sc_{idx}" not in st.session_state: st.session_state[f"sc_{idx}"] = s_data.get('stroke_color', "#000000")
+            if f"sa_{idx}" not in st.session_state: st.session_state[f"sa_{idx}"] = float(s_data.get('stroke_alpha', 1.0))
+            if f"swd_{idx}" not in st.session_state: st.session_state[f"swd_{idx}"] = int(s_data.get('stroke_width', 10))
+            if f"sbd_{idx}" not in st.session_state: st.session_state[f"sbd_{idx}"] = float(s_data.get('stroke_blur', 0.0))
             
-            if f"sw_{target_name}" not in st.session_state: st.session_state[f"sw_{target_name}"] = int(s_data.get('w', default_w))
-            if f"sh_{target_name}" not in st.session_state: st.session_state[f"sh_{target_name}"] = int(s_data.get('h', default_h))
-            if f"sfh_{target_name}" not in st.session_state: st.session_state[f"sfh_{target_name}"] = s_data.get('flip_h', False)
-            if f"sfv_{target_name}" not in st.session_state: st.session_state[f"sfv_{target_name}"] = s_data.get('flip_v', False)
-            if f"sx_{target_name}" not in st.session_state: st.session_state[f"sx_{target_name}"] = int(s_data.get('x', 100))
-            if f"sy_{target_name}" not in st.session_state: st.session_state[f"sy_{target_name}"] = int(s_data.get('y', 100))
-            if f"svgr_{target_name}" not in st.session_state: st.session_state[f"svgr_{target_name}"] = int(s_data.get('rotate', 0))
+            if f"sw_{idx}" not in st.session_state: st.session_state[f"sw_{idx}"] = int(s_data.get('w', default_w))
+            if f"sh_{idx}" not in st.session_state: st.session_state[f"sh_{idx}"] = int(s_data.get('h', default_h))
+            if f"sfh_{idx}" not in st.session_state: st.session_state[f"sfh_{idx}"] = s_data.get('flip_h', False)
+            if f"sfv_{idx}" not in st.session_state: st.session_state[f"sfv_{idx}"] = s_data.get('flip_v', False)
+            if f"sx_{idx}" not in st.session_state: st.session_state[f"sx_{idx}"] = int(s_data.get('x', 100))
+            if f"sy_{idx}" not in st.session_state: st.session_state[f"sy_{idx}"] = int(s_data.get('y', 100))
+            if f"svgr_{idx}" not in st.session_state: st.session_state[f"svgr_{idx}"] = int(s_data.get('rotate', 0))
 
             # --- 2. ウィジェットからは「初期値(value)」を削除し、引数をキーワードで明示する ---
             col_sfh, col_sfv = st.columns(2)
-            sfh = col_sfh.checkbox("横反転", key=f"sfh_{target_name}")
-            sfv = col_sfv.checkbox("縦反転", key=f"sfv_{target_name}")
+            sfh = col_sfh.checkbox("横反転", key=f"sfh_{idx}")
+            sfv = col_sfv.checkbox("縦反転", key=f"sfv_{idx}")
 
             col_sx, col_sy = st.columns(2)
-            svg_x = col_sx.number_input("X位置", min_value=-1000, max_value=4000, step=10, key=f"sx_{target_name}")
-            svg_y = col_sy.number_input("Y位置", min_value=-1000, max_value=4000, step=10, key=f"sy_{target_name}")
+            svg_x = col_sx.number_input("X位置", min_value=-1000, max_value=4000, step=10, key=f"sx_{idx}")
+            svg_y = col_sy.number_input("Y位置", min_value=-1000, max_value=4000, step=10, key=f"sy_{idx}")
 
             col1, col2 = st.columns(2)
-            svg_w = col1.number_input("幅", min_value=10, max_value=4000, step=10, key=f"sw_{target_name}")
-            svg_h = col2.number_input("高", min_value=10, max_value=4000, step=10, key=f"sh_{target_name}")
+            svg_w = col1.number_input("幅", min_value=10, max_value=4000, step=10, key=f"sw_{idx}")
+            svg_h = col2.number_input("高", min_value=10, max_value=4000, step=10, key=f"sh_{idx}")
 
-            svg_rot = st.number_input("回転", min_value=-360, max_value=360, step=10, key=f"svgr_{target_name}")
+            svg_rot = st.number_input("回転", min_value=-360, max_value=360, step=10, key=f"svgr_{idx}")
 
             col_c1, col_c2 = st.columns(2)
-            f_color = col_c1.text_input("塗り色", key=f"fc_{target_name}")
-            f_alpha = col_c2.number_input("塗り透過 (0-1.0)", min_value=0.0, max_value=1.0, step=0.1, key=f"fa_{target_name}")
-            s_color = col_c1.text_input("枠線色", key=f"sc_{target_name}")
-            s_alpha = col_c2.number_input("枠線透過 (0-1.0)", min_value=0.0, max_value=1.0, step=0.1, key=f"sa_{target_name}")
-            s_width = col_c1.number_input("枠線幅", min_value=0, max_value=500, step=1, key=f"swd_{target_name}")
-            s_blur = col_c2.number_input("枠線ぼかし", min_value=0.0, max_value=50.0, step=0.1, key=f"sbd_{target_name}")
+            f_color = col_c1.text_input("塗り色", key=f"fc_{idx}")
+            f_alpha = col_c2.number_input("塗り透過 (0-1.0)", min_value=0.0, max_value=1.0, step=0.1, key=f"fa_{idx}")
+            s_color = col_c1.text_input("枠線色", key=f"sc_{idx}")
+            s_alpha = col_c2.number_input("枠線透過 (0-1.0)", min_value=0.0, max_value=1.0, step=0.1, key=f"sa_{idx}")
+            s_width = col_c1.number_input("枠線幅", min_value=0, max_value=500, step=1, key=f"swd_{idx}")
+            s_blur = col_c2.number_input("枠線ぼかし", min_value=0.0, max_value=50.0, step=0.1, key=f"sbd_{idx}")
 
             svg_settings.append({
                 'filename': target_name, 
