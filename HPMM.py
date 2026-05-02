@@ -958,9 +958,7 @@ with st.sidebar:
     if conf_file and 'temp_config' in locals():
         img_names = [img.get('filename', '---') for img in temp_config.get("images", [])]
         if img_names:
-            # guide_imgs = "必要な画像：<br>" + "<br>".join([f"・画像{i+1}: {name}" for i, name in enumerate(img_names)])
-            guide_imgs = "必要な画像：<br>" + "<br>".join([f"・画像{i+1}: re.sub(r'^\d+_', '',{name})" for i, name in enumerate(img_names)])
-
+            guide_imgs = "必要な画像：<br>" + "<br>".join([f"・画像{i+1}: {name}" for i, name in enumerate(img_names)])
             st.markdown(f'<div class="guide-box" style="color: #FF8888; border: 1px solid red; margin-bottom: 5px;">{guide_imgs}</div>', unsafe_allow_html=True)
 
     st.markdown('<p class="upload-caption">※ 5枚目以降の画像は無視されます</p>', unsafe_allow_html=True)
