@@ -818,6 +818,15 @@ with st.sidebar:
                 if "outline_c" in txt_conf: st.session_state[f"oc{i}"] = txt_conf["outline_c"]
                 if "outline_w" in txt_conf: st.session_state[f"ow{i}"] = int(txt_conf["outline_w"])
 
+            # --- 画像(images)の設定を一気に反映 ---
+            for i, img_conf in enumerate(temp_config.get("images", [])):
+                if "scale" in img_conf: st.session_state[f"s{i}"] = int(img_conf["scale"])
+                if "rotate" in img_conf: st.session_state[f"r{i}"] = int(img_conf["rotate"])
+                if "offset_x" in img_conf: st.session_state[f"x{i}"] = int(img_conf["offset_x"])
+                if "offset_y" in img_conf: st.session_state[f"y{i}"] = int(img_conf["offset_y"])
+                if "flip_h" in img_conf: st.session_state[f"ifh{i}"] = img_conf["flip_h"]
+                if "flip_v" in img_conf: st.session_state[f"ifv{i}"] = img_conf["flip_v"]
+
             # configを更新
             temp_config["svgs"] = json_svgs
             st.session_state.config = temp_config
@@ -917,14 +926,14 @@ with st.sidebar:
     if not valid_state:
         st.error("比率合計が100%超過")
 
+    up_imgs = st.file_uploader("画像 (最大4枚)", type=["jpg", "png"], accept_multiple_files=True, key=f"up_imgs_{st.session_state.reset_count}")
+
     # 画像アップロード
     if conf_file and 'temp_config' in locals():
         img_names = [img.get('filename', '---') for img in temp_config.get("images", [])]
         if img_names:
             guide_imgs = "必要な画像：<br>" + "<br>".join([f"・画像{i+1}: {name}" for i, name in enumerate(img_names)])
             st.markdown(f'<div class="guide-box" style="color: #FF8888; border: 1px solid red; margin-bottom: 5px;">{guide_imgs}</div>', unsafe_allow_html=True)
-
-    up_imgs = st.file_uploader("画像 (最大4枚)", type=["jpg", "png"], accept_multiple_files=True, key=f"up_imgs_{st.session_state.reset_count}")
 
     st.markdown('<p class="upload-caption">※ 5枚目以降の画像は無視されます</p>', unsafe_allow_html=True)
     
@@ -972,13 +981,13 @@ with st.sidebar:
                 
                 img_settings.append({'filename': fname, 'scale': sc, 'rotate': rot, 'offset_x': ox, 'offset_y': oy, 'flip_h': fh, 'flip_v': fv})
 
+    up_overlay = st.file_uploader("オーバーレイ画像 (1枚のみ)", type=["png"], key=f"up_overlay_{st.session_state.reset_count}")
+
     # オーバーレイ画像アップロード
     if conf_file and 'temp_config' in locals():
         if "overlay" in temp_config and temp_config["overlay"]:
             ov_name = temp_config["overlay"].get("filename", "---")
             st.markdown(f'<div class="guide-box" style="color: #FF8888; border: 1px solid red; margin-bottom: 5px;">必要なオーバーレイ：<br>・{ov_name}</div>', unsafe_allow_html=True)
-
-    up_overlay = st.file_uploader("オーバーレイ画像 (1枚のみ)", type=["png"], key=f"up_overlay_{st.session_state.reset_count}")
 
     if up_overlay is not None:
         img = Image.open(up_overlay).convert("RGBA")
@@ -1014,14 +1023,14 @@ with st.sidebar:
                 'flip_h': ov_fh, 'flip_v': ov_fv
             }
 
+    up_svgs = st.file_uploader("SVG (最大40個)", type=["svg"], accept_multiple_files=True, key=f"up_svgs_{st.session_state.reset_count}")    
+
     # SVGアップロード
     if conf_file and 'temp_config' in locals():
         svg_names = [svg.get('filename', '---') for svg in temp_config.get("svgs", [])]
         if svg_names:
             guide_svgs = "必要なSVG：<br>" + "<br>".join([f"・SVG{i+1}: {name}" for i, name in enumerate(svg_names)])
             st.markdown(f'<div class="guide-box" style="color: #FF8888; border: 1px solid red; margin-bottom: 5px;">{guide_svgs}</div>', unsafe_allow_html=True)
-
-    up_svgs = st.file_uploader("SVG (最大40個)", type=["svg"], accept_multiple_files=True, key=f"up_svgs_{st.session_state.reset_count}")    
     
     st.markdown('<p class="upload-caption">※ 41個目以降のSVGは無視されます</p>', unsafe_allow_html=True)
     
@@ -1308,6 +1317,7 @@ with st.sidebar:
     - [解説動画2](https://www.youtube.com/watch?v=8_X5h49XGHw)
     - [Web版](https://vphirosan1128-hpmm.streamlit.app/)
     - [ローカル版配布サイト](https://www.patreon.com/posts/man-hua-sheng-156257970)
+    
     """)
 
 # --- 描画処理 & 保存ボタン生成 ---
