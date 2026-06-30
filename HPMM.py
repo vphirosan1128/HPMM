@@ -1071,9 +1071,9 @@ with st.sidebar:
             st.session_state[f"tv{i}"] = ""  # 内容
         if f"tf{i}" not in st.session_state:
             # aquapfontを優先、なければリストの先頭
-            st.session_state[f"tf{i}"] = "aqua_pfont" if "aqua_pfont" in system_fonts else system_fonts[0]
+            st.session_state[f"tf{i}"] = "Anime Ace 3 BB" if "Anime Ace 3 BB" in system_fonts else system_fonts[0]
         if f"td{i}" not in st.session_state:
-            st.session_state[f"td{i}"] = "縦書き" # デフォルト方向
+            st.session_state[f"td{i}"] = "横書き" # デフォルト方向
         if f"tb{i}" not in st.session_state:
             st.session_state[f"tb{i}"] = False  # 太字
         if f"ti{i}" not in st.session_state:
@@ -1081,7 +1081,7 @@ with st.sidebar:
         if f"tsy{i}" not in st.session_state:
             st.session_state[f"tsy{i}"] = 100   # 縦倍率
         if f"tsx{i}" not in st.session_state:
-            st.session_state[f"tsx{i}"] = 100   # 横倍率
+            st.session_state[f"tsx{i}"] = 80   # 横倍率
         if f"tlh{i}" not in st.session_state:
             st.session_state[f"tlh{i}"] = 1.1   # 行間
         if f"tls{i}" not in st.session_state:
