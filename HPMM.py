@@ -473,6 +473,10 @@ def render_manga_preview(imgs, layout, c_w, c_h, bg, lw, img_settings, ratios, s
         # 1. 表示用のテキストを準備（元のデータ t["text"] は壊さない）
         display_text = t["text"]
 
+        if t.get("upper", False):
+            display_text = display_text.upper()
+
+
         # 2. 縦書き設定の場合のみ、この場限りの変換をかける
         if t.get("writing_mode") == "縦書き":
             display_text = to_vertical_text(t["text"])
@@ -504,6 +508,12 @@ def generate_save_js(img_b64, svg_data, txt_settings, c_w, c_h):
     display_txt_settings = []
     for t in txt_settings:
         item = t.copy() # 元のデータを壊さないようにコピー
+
+        # 大文字変換
+        if item.get("upper", False):
+            item["text"] = item["text"].upper()
+
+        # 縦書き変換
         if item.get('writing_mode') == "縦書き":
             # ここで Python の to_vertical_text を呼び出す
             item['text'] = to_vertical_text(item['text'])
@@ -1078,6 +1088,10 @@ with st.sidebar:
             st.session_state[f"tb{i}"] = False  # 太字
         if f"ti{i}" not in st.session_state:
             st.session_state[f"ti{i}"] = False  # 斜体
+
+        if f"tu{i}" not in st.session_state:
+            st.session_state[f"tu{i}"] = False #大文字
+
         if f"tsy{i}" not in st.session_state:
             st.session_state[f"tsy{i}"] = 100   # 縦倍率
         if f"tsx{i}" not in st.session_state:
@@ -1100,6 +1114,8 @@ with st.sidebar:
             st.session_state[f"oc{i}"] = "#FFFFFF" # 縁の色(白)
         if f"ow{i}" not in st.session_state:
             st.session_state[f"ow{i}"] = 4      # 縁太さ
+
+
         # -----------------------------
 
         with st.expander(f"テキスト{i+1}"):
@@ -1116,9 +1132,10 @@ with st.sidebar:
             ow = col_ow.number_input("縁太さ", 0, 200, step=1, key=f"ow{i}")
             oc = col_oc.text_input("縁の色", key=f"oc{i}")
 
-            col_tb, col_ti = st.columns(2)
+            col_tb, col_ti, col_uc = st.columns(3)
             tb = col_tb.checkbox("太字", key=f"tb{i}")
             ti = col_ti.checkbox("斜体", key=f"ti{i}")
+            t_upper = col_uc.checkbox("大文字", key=f"tu{i}")
 
             col_tlh, col_tls = st.columns(2)
             tlh = col_tlh.number_input("行間", 0.1, 10.0, step=0.1, key=f"tlh{i}")
@@ -1149,9 +1166,9 @@ with st.sidebar:
                 'bold': tb, 
                 'italic': ti, 
                 'line_height': tlh, 
-                'letter_spacing': tls
+                'letter_spacing': tls,
+                'upper': t_upper
             })
-
 
     up_svgs = st.file_uploader("SVG (最大40個)", type=["svg"], accept_multiple_files=True, key=f"up_svgs_{st.session_state.reset_count}")    
 
@@ -1170,8 +1187,16 @@ with st.sidebar:
                     for k in keys:
                         # 例: fc_1 の値を fc_0 に上書き
                         st.session_state[f"{k}_{j}"] = st.session_state.get(f"{k}_{j+1}")
-                break
                 
+                #last = len(st.session_state.prev_svg_ids) - 1
+
+                #for k in keys:
+                #    key = f"{k}_{last}"
+                #    if key in st.session_state:
+                #        del st.session_state[key]
+                
+                break
+
     st.session_state.prev_svg_ids = current_svg_ids
     # ----------------------------------------
 
@@ -1197,9 +1222,10 @@ with st.sidebar:
             st.session_state.cached_svg_raw = []
             for i, f in enumerate(up_svgs[:40]): # enumerate で i を取得
                 f.seek(0)
-                st.session_state.cached_svg_raw.append({'filename': f"{i}_{f.name}", 'content': f.read().decode('utf-8')}) # インデックスを付与
-            
-            current_names = [f"{i}_{f.name}" for i, f in enumerate(up_svgs[:40])] # インデックスを付与
+                #st.session_state.cached_svg_raw.append({'filename': f"{i}_{f.name}", 'content': f.read().decode('utf-8')}) # インデックスを付与
+                st.session_state.cached_svg_raw.append({'file_id': f.file_id, 'filename': f.name, 'content': f.read().decode('utf-8')})
+            #current_names = [f"{i}_{f.name}" for i, f in enumerate(up_svgs[:40])] # インデックスを付与
+            current_names = [f.file_id for f in up_svgs]
 
             if st.session_state.svg_order != current_names:
                 new_order = [name for name in st.session_state.svg_order if name in current_names]
@@ -1243,17 +1269,30 @@ with st.sidebar:
             c_btn2.button("↓", key=f"svg_down_{idx}", on_click=swap_svg, args=(idx, "down"))
 
             # 表示用変数に置き換え
-            display_name = re.sub(r'^[0-9]+_', '', name)
+            #display_name = re.sub(r'^[0-9]+_', '', name)
+
+            svg = next(
+                s
+                for s in raw_svg_list
+                if s["file_id"] == name
+            )
+
+            display_name = svg["filename"]
+
             c_txt.text(f"{idx+1}: {display_name}")
 
     # SVG個別設定
     saved_svgs = conf.get("svgs", [])        
     for idx, target_name in enumerate(st.session_state.svg_order): # enumerate で idx を取得
-        target_svg = next((s for s in raw_svg_list if s['filename'] == target_name), None)
+        #target_svg = next((s for s in raw_svg_list if s['filename'] == target_name), None)
+        target_svg = next((s for s in raw_svg_list if s['file_id'] == target_name), None)
+
         if not target_svg: continue
         s_data = saved_svgs[idx] if idx < len(saved_svgs) else {} # 順番で取得        
         
-        display_target_name = re.sub(r'^[0-9]+_', '', target_name)
+        #display_target_name = re.sub(r'^[0-9]+_', '', target_name)
+        display_target_name = f"{target_svg['filename']}"
+
         with st.expander(f"SVG設定: {display_target_name}"):
 
             # 元の比率からデフォルトサイズを計算
@@ -1303,7 +1342,7 @@ with st.sidebar:
             s_blur = col_c2.number_input("枠線ぼかし", min_value=0.0, max_value=50.0, step=0.1, key=f"sbd_{idx}")
 
             svg_settings.append({
-                'filename': target_name, 
+                'filename': target_svg['filename'], 
                 'content': target_svg['content'], 
                 'w': svg_w, 
                 'h': svg_h, 
